@@ -1,0 +1,413 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000001 /* InsightApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* InsightApp.swift */; };
+		A10000000000000000000002 /* MainChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* MainChatView.swift */; };
+		A10000000000000000000003 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* ChatViewModel.swift */; };
+		A10000000000000000000004 /* ChatDisplayMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* ChatDisplayMessage.swift */; };
+		A10000000000000000000005 /* ChatPreviewData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* ChatPreviewData.swift */; };
+		A10000000000000000000006 /* InsightColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* InsightColors.swift */; };
+		A10000000000000000000007 /* InsightTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* InsightTypography.swift */; };
+		A10000000000000000000008 /* InsightSpacing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* InsightSpacing.swift */; };
+		A10000000000000000000009 /* InsightButtonStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* InsightButtonStyles.swift */; };
+		A1000000000000000000000A /* InsightTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* InsightTheme.swift */; };
+		A1000000000000000000000B /* StatusIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* StatusIndicatorView.swift */; };
+		A1000000000000000000000C /* ChatBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000C /* ChatBubbleView.swift */; };
+		A1000000000000000000000D /* ChatTranscriptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000D /* ChatTranscriptView.swift */; };
+		A1000000000000000000000E /* ComposerBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000E /* ComposerBarView.swift */; };
+		A1000000000000000000000F /* PhotoActionButtonsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000F /* PhotoActionButtonsView.swift */; };
+		A10000000000000000000010 /* StreamingIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* StreamingIndicatorView.swift */; };
+		A10000000000000000000011 /* PhotoContextChipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* PhotoContextChipView.swift */; };
+		A10000000000000000000012 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* EmptyStateView.swift */; };
+		A10000000000000000000013 /* CameraPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* CameraPickerView.swift */; };
+		A10000000000000000000014 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* Assets.xcassets */; };
+		A10000000000000000000015 /* InsightEngine in Frameworks */ = {isa = PBXBuildFile; productRef = A50000000000000000000001 /* InsightEngine */; };
+        A10000000000000000000016 /* ModelSetupOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000016 /* ModelSetupOverlay.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A20000000000000000000001 /* InsightApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightApp.swift; sourceTree = "<group>"; };
+		A20000000000000000000002 /* MainChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainChatView.swift; sourceTree = "<group>"; };
+		A20000000000000000000003 /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
+		A20000000000000000000004 /* ChatDisplayMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatDisplayMessage.swift; sourceTree = "<group>"; };
+		A20000000000000000000005 /* ChatPreviewData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatPreviewData.swift; sourceTree = "<group>"; };
+		A20000000000000000000006 /* InsightColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightColors.swift; sourceTree = "<group>"; };
+		A20000000000000000000007 /* InsightTypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightTypography.swift; sourceTree = "<group>"; };
+		A20000000000000000000008 /* InsightSpacing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightSpacing.swift; sourceTree = "<group>"; };
+		A20000000000000000000009 /* InsightButtonStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightButtonStyles.swift; sourceTree = "<group>"; };
+		A2000000000000000000000A /* InsightTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightTheme.swift; sourceTree = "<group>"; };
+		A2000000000000000000000B /* StatusIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusIndicatorView.swift; sourceTree = "<group>"; };
+		A2000000000000000000000C /* ChatBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBubbleView.swift; sourceTree = "<group>"; };
+		A2000000000000000000000D /* ChatTranscriptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatTranscriptView.swift; sourceTree = "<group>"; };
+		A2000000000000000000000E /* ComposerBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposerBarView.swift; sourceTree = "<group>"; };
+		A2000000000000000000000F /* PhotoActionButtonsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoActionButtonsView.swift; sourceTree = "<group>"; };
+		A20000000000000000000010 /* StreamingIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamingIndicatorView.swift; sourceTree = "<group>"; };
+		A20000000000000000000011 /* PhotoContextChipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoContextChipView.swift; sourceTree = "<group>"; };
+		A20000000000000000000012 /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
+		A20000000000000000000013 /* CameraPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPickerView.swift; sourceTree = "<group>"; };
+		A20000000000000000000016 /* ModelSetupOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelSetupOverlay.swift; sourceTree = "<group>"; };
+		A20000000000000000000014 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A20000000000000000000015 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A30000000000000000000001 /* InsightIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InsightIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A40000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000015 /* InsightEngine in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A60000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				A60000000000000000000002 /* InsightApp */,
+				A60000000000000000000003 /* Packages */,
+				A60000000000000000000004 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A60000000000000000000002 /* InsightApp */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000001 /* InsightApp.swift */,
+				A60000000000000000000005 /* DesignSystem */,
+				A60000000000000000000006 /* Models */,
+				A60000000000000000000007 /* Preview */,
+				A60000000000000000000008 /* ViewModels */,
+				A60000000000000000000009 /* Views */,
+				A20000000000000000000014 /* Assets.xcassets */,
+				A20000000000000000000015 /* Info.plist */,
+			);
+			path = InsightApp;
+			sourceTree = "<group>";
+		};
+		A60000000000000000000003 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		A60000000000000000000004 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A30000000000000000000001 /* InsightIOS.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A60000000000000000000005 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000006 /* InsightColors.swift */,
+				A20000000000000000000007 /* InsightTypography.swift */,
+				A20000000000000000000008 /* InsightSpacing.swift */,
+				A20000000000000000000009 /* InsightButtonStyles.swift */,
+				A2000000000000000000000A /* InsightTheme.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		A60000000000000000000006 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000004 /* ChatDisplayMessage.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A60000000000000000000007 /* Preview */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000005 /* ChatPreviewData.swift */,
+			);
+			path = Preview;
+			sourceTree = "<group>";
+		};
+		A60000000000000000000008 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000003 /* ChatViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		A60000000000000000000009 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000002 /* MainChatView.swift */,
+				A6000000000000000000000A /* Components */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A6000000000000000000000A /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				A2000000000000000000000B /* StatusIndicatorView.swift */,
+				A2000000000000000000000C /* ChatBubbleView.swift */,
+				A2000000000000000000000D /* ChatTranscriptView.swift */,
+				A2000000000000000000000E /* ComposerBarView.swift */,
+				A2000000000000000000000F /* PhotoActionButtonsView.swift */,
+				A20000000000000000000010 /* StreamingIndicatorView.swift */,
+				A20000000000000000000011 /* PhotoContextChipView.swift */,
+				A20000000000000000000012 /* EmptyStateView.swift */,
+                A20000000000000000000013 /* CameraPickerView.swift */,
+                A20000000000000000000016 /* ModelSetupOverlay.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A70000000000000000000001 /* InsightIOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A90000000000000000000003 /* Build configuration list for PBXNativeTarget "InsightIOS" */;
+			buildPhases = (
+				A80000000000000000000001 /* Sources */,
+				A40000000000000000000001 /* Frameworks */,
+				A80000000000000000000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = InsightIOS;
+			packageProductDependencies = (
+				A50000000000000000000001 /* InsightEngine */,
+			);
+			productName = InsightIOS;
+			productReference = A30000000000000000000001 /* InsightIOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AA0000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					A70000000000000000000001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = A90000000000000000000001 /* Build configuration list for PBXProject "InsightIOS" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A60000000000000000000001;
+			packageReferences = (
+				A50000000000000000000002 /* XCLocalSwiftPackageReference "InsightEngine" */,
+			);
+			productRefGroup = A60000000000000000000004 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A70000000000000000000001 /* InsightIOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A80000000000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000014 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A80000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000001 /* InsightApp.swift in Sources */,
+				A10000000000000000000002 /* MainChatView.swift in Sources */,
+				A10000000000000000000003 /* ChatViewModel.swift in Sources */,
+				A10000000000000000000004 /* ChatDisplayMessage.swift in Sources */,
+				A10000000000000000000005 /* ChatPreviewData.swift in Sources */,
+				A10000000000000000000006 /* InsightColors.swift in Sources */,
+				A10000000000000000000007 /* InsightTypography.swift in Sources */,
+				A10000000000000000000008 /* InsightSpacing.swift in Sources */,
+				A10000000000000000000009 /* InsightButtonStyles.swift in Sources */,
+				A1000000000000000000000A /* InsightTheme.swift in Sources */,
+				A1000000000000000000000B /* StatusIndicatorView.swift in Sources */,
+				A1000000000000000000000C /* ChatBubbleView.swift in Sources */,
+				A1000000000000000000000D /* ChatTranscriptView.swift in Sources */,
+				A1000000000000000000000E /* ComposerBarView.swift in Sources */,
+				A1000000000000000000000F /* PhotoActionButtonsView.swift in Sources */,
+				A10000000000000000000010 /* StreamingIndicatorView.swift in Sources */,
+				A10000000000000000000011 /* PhotoContextChipView.swift in Sources */,
+				A10000000000000000000012 /* EmptyStateView.swift in Sources */,
+                A10000000000000000000013 /* CameraPickerView.swift in Sources */,
+                A10000000000000000000016 /* ModelSetupOverlay.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		AB0000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		AB0000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		AB0000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = InsightApp/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.insightios.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		AB0000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = InsightApp/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.insightios.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A90000000000000000000001 /* Build configuration list for PBXProject "InsightIOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AB0000000000000000000001 /* Debug */,
+				AB0000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A90000000000000000000003 /* Build configuration list for PBXNativeTarget "InsightIOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AB0000000000000000000003 /* Debug */,
+				AB0000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		A50000000000000000000002 /* XCLocalSwiftPackageReference "InsightEngine" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/InsightEngine;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A50000000000000000000001 /* InsightEngine */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A50000000000000000000002 /* XCLocalSwiftPackageReference "InsightEngine" */;
+			productName = InsightEngine;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = AA0000000000000000000001 /* Project object */;
+}
