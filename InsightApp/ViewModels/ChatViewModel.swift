@@ -156,12 +156,10 @@ final class ChatViewModel {
                 messages.append(ChatDisplayMessage(id: greetingID, role: .assistant, content: "", isStreaming: true))
                 streamingMessageID = greetingID
 
-                var streamed = ""
                 _ = try await engine.greetAfterPhoto(
                     onToken: { [weak self] token in
                         Task { @MainActor in
-                            streamed += token
-                            self?.updateStreamingMessage(id: greetingID, content: streamed)
+                            self?.appendStreamingToken(id: greetingID, token: token)
                         }
                     },
                     onState: { [weak self] state in
@@ -233,7 +231,9 @@ final class ChatViewModel {
             configuration = config
             modelBundle = config.modelBundle
 
-            if config.modelStore.isLLMReady, config.modelStore.isWhisperReady {
+            if config.mockMode {
+                await initializeEngine(with: config)
+            } else if config.modelStore.isLLMReady, config.modelStore.isWhisperReady {
                 await initializeEngine(with: config)
             } else if config.modelStore.isLLMReady {
                 bootstrapState = .downloading(nil)
@@ -272,14 +272,12 @@ final class ChatViewModel {
         messages.append(ChatDisplayMessage(id: streamID, role: .assistant, content: "", isStreaming: true))
         streamingMessageID = streamID
 
-        var streamed = ""
         do {
             _ = try await engine.sendTextMessage(
                 text,
                 onToken: { [weak self] token in
                     Task { @MainActor in
-                        streamed += token
-                        self?.updateStreamingMessage(id: streamID, content: streamed)
+                        self?.appendStreamingToken(id: streamID, token: token)
                     }
                 },
                 onState: { [weak self] state in
@@ -303,8 +301,6 @@ final class ChatViewModel {
         let streamID = UUID().uuidString
         messages.append(ChatDisplayMessage(id: streamID, role: .assistant, content: "", isStreaming: true))
         streamingMessageID = streamID
-        var streamed = ""
-
         do {
             let result = try await engine.sendVoiceUtterance(
                 onTranscript: { [weak self] transcript in
@@ -312,8 +308,7 @@ final class ChatViewModel {
                 },
                 onToken: { [weak self] token in
                     Task { @MainActor in
-                        streamed += token
-                        self?.updateStreamingMessage(id: streamID, content: streamed)
+                        self?.appendStreamingToken(id: streamID, token: token)
                     }
                 },
                 onState: { [weak self] state in
@@ -350,6 +345,12 @@ final class ChatViewModel {
                 imageURL: imageURL
             )
         )
+    }
+
+    private func appendStreamingToken(id: String, token: String) {
+        guard let index = messages.firstIndex(where: { $0.id == id }) else { return }
+        messages[index].content += token
+        messages[index].isStreaming = true
     }
 
     private func updateStreamingMessage(id: String, content: String) {

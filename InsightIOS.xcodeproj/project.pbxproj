@@ -3,10 +3,11 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4A8030632FFB6319000F2158 /* Splash View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A8030622FFB6319000F2158 /* Splash View.swift */; };
 		A10000000000000000000001 /* InsightApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* InsightApp.swift */; };
 		A10000000000000000000002 /* MainChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* MainChatView.swift */; };
 		A10000000000000000000003 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* ChatViewModel.swift */; };
@@ -28,10 +29,11 @@
 		A10000000000000000000013 /* CameraPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* CameraPickerView.swift */; };
 		A10000000000000000000014 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* Assets.xcassets */; };
 		A10000000000000000000015 /* InsightEngine in Frameworks */ = {isa = PBXBuildFile; productRef = A50000000000000000000001 /* InsightEngine */; };
-        A10000000000000000000016 /* ModelSetupOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000016 /* ModelSetupOverlay.swift */; };
+		A10000000000000000000016 /* ModelSetupOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000016 /* ModelSetupOverlay.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		4A8030622FFB6319000F2158 /* Splash View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Splash View.swift"; sourceTree = "<group>"; };
 		A20000000000000000000001 /* InsightApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightApp.swift; sourceTree = "<group>"; };
 		A20000000000000000000002 /* MainChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainChatView.swift; sourceTree = "<group>"; };
 		A20000000000000000000003 /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
@@ -51,9 +53,9 @@
 		A20000000000000000000011 /* PhotoContextChipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoContextChipView.swift; sourceTree = "<group>"; };
 		A20000000000000000000012 /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
 		A20000000000000000000013 /* CameraPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPickerView.swift; sourceTree = "<group>"; };
-		A20000000000000000000016 /* ModelSetupOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelSetupOverlay.swift; sourceTree = "<group>"; };
 		A20000000000000000000014 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A20000000000000000000015 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A20000000000000000000016 /* ModelSetupOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelSetupOverlay.swift; sourceTree = "<group>"; };
 		A30000000000000000000001 /* InsightIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InsightIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -89,6 +91,7 @@
 				A60000000000000000000009 /* Views */,
 				A20000000000000000000014 /* Assets.xcassets */,
 				A20000000000000000000015 /* Info.plist */,
+				4A8030622FFB6319000F2158 /* Splash View.swift */,
 			);
 			path = InsightApp;
 			sourceTree = "<group>";
@@ -164,8 +167,8 @@
 				A20000000000000000000010 /* StreamingIndicatorView.swift */,
 				A20000000000000000000011 /* PhotoContextChipView.swift */,
 				A20000000000000000000012 /* EmptyStateView.swift */,
-                A20000000000000000000013 /* CameraPickerView.swift */,
-                A20000000000000000000016 /* ModelSetupOverlay.swift */,
+				A20000000000000000000013 /* CameraPickerView.swift */,
+				A20000000000000000000016 /* ModelSetupOverlay.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -218,7 +221,7 @@
 			);
 			mainGroup = A60000000000000000000001;
 			packageReferences = (
-				A50000000000000000000002 /* XCLocalSwiftPackageReference "InsightEngine" */,
+				A50000000000000000000002 /* XCLocalSwiftPackageReference "Packages/InsightEngine" */,
 			);
 			productRefGroup = A60000000000000000000004 /* Products */;
 			projectDirPath = "";
@@ -254,6 +257,7 @@
 				A10000000000000000000007 /* InsightTypography.swift in Sources */,
 				A10000000000000000000008 /* InsightSpacing.swift in Sources */,
 				A10000000000000000000009 /* InsightButtonStyles.swift in Sources */,
+				4A8030632FFB6319000F2158 /* Splash View.swift in Sources */,
 				A1000000000000000000000A /* InsightTheme.swift in Sources */,
 				A1000000000000000000000B /* StatusIndicatorView.swift in Sources */,
 				A1000000000000000000000C /* ChatBubbleView.swift in Sources */,
@@ -263,8 +267,8 @@
 				A10000000000000000000010 /* StreamingIndicatorView.swift in Sources */,
 				A10000000000000000000011 /* PhotoContextChipView.swift in Sources */,
 				A10000000000000000000012 /* EmptyStateView.swift in Sources */,
-                A10000000000000000000013 /* CameraPickerView.swift in Sources */,
-                A10000000000000000000016 /* ModelSetupOverlay.swift in Sources */,
+				A10000000000000000000013 /* CameraPickerView.swift in Sources */,
+				A10000000000000000000016 /* ModelSetupOverlay.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -395,7 +399,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		A50000000000000000000002 /* XCLocalSwiftPackageReference "InsightEngine" */ = {
+		A50000000000000000000002 /* XCLocalSwiftPackageReference "Packages/InsightEngine" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/InsightEngine;
 		};
@@ -404,7 +408,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		A50000000000000000000001 /* InsightEngine */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A50000000000000000000002 /* XCLocalSwiftPackageReference "InsightEngine" */;
+			package = A50000000000000000000002 /* XCLocalSwiftPackageReference "Packages/InsightEngine" */;
 			productName = InsightEngine;
 		};
 /* End XCSwiftPackageProductDependency section */

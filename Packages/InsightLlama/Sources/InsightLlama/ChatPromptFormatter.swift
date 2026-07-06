@@ -40,11 +40,16 @@ enum ChatPromptFormatter {
                 guard retry >= 0, retry < buffer.count else {
                     throw LlamaRuntimeError.promptFormattingFailed
                 }
-                return String(cString: buffer)
+                return decodeTemplateOutput(buffer, byteCount: Int(retry))
             }
 
-            return String(cString: buffer)
+            return decodeTemplateOutput(buffer, byteCount: Int(written))
         }
+    }
+
+    private static func decodeTemplateOutput(_ buffer: [CChar], byteCount: Int) -> String {
+        let outputBytes = buffer.prefix(byteCount).map { UInt8(bitPattern: $0) }
+        return String(decoding: outputBytes, as: UTF8.self)
     }
 }
 

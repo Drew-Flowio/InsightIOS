@@ -20,6 +20,7 @@ public struct SessionStateView: Sendable {
     public let memoryFactCount: Int
     public let currentState: AppState
     public let sessionSummary: String
+    public let runtimeDebugDescription: String
 
     public init(
         sessionID: String,
@@ -28,7 +29,8 @@ public struct SessionStateView: Sendable {
         activePromptVersionID: String?,
         memoryFactCount: Int,
         currentState: AppState,
-        sessionSummary: String
+        sessionSummary: String,
+        runtimeDebugDescription: String = ""
     ) {
         self.sessionID = sessionID
         self.messageCount = messageCount
@@ -37,6 +39,7 @@ public struct SessionStateView: Sendable {
         self.memoryFactCount = memoryFactCount
         self.currentState = currentState
         self.sessionSummary = sessionSummary
+        self.runtimeDebugDescription = runtimeDebugDescription
     }
 }
 

@@ -7,6 +7,7 @@ public struct LlmRuntimeConfig: Sendable, Equatable {
     public let modelFileName: String
     public let contextLength: Int
     public let maxTokens: Int
+    public let batchSize: Int
     public let temperature: Double
     public let topP: Double
     public let topK: Int32
@@ -18,6 +19,7 @@ public struct LlmRuntimeConfig: Sendable, Equatable {
         modelFileName: String,
         contextLength: Int = 2048,
         maxTokens: Int = 320,
+        batchSize: Int = 128,
         temperature: Double = 0.62,
         topP: Double = 0.90,
         topK: Int32 = 50,
@@ -27,6 +29,7 @@ public struct LlmRuntimeConfig: Sendable, Equatable {
         self.modelFileName = modelFileName
         self.contextLength = contextLength
         self.maxTokens = maxTokens
+        self.batchSize = batchSize
         self.temperature = temperature
         self.topP = topP
         self.topK = topK
@@ -61,6 +64,11 @@ public struct SttRuntimeConfig: Sendable, Equatable {
 public protocol SttServing: Sendable {
     func prepare() async throws
     func transcribe(audioURL: URL) async throws -> String
+    func unload() async
+}
+
+public extension SttServing {
+    func unload() async {}
 }
 
 // MARK: - Text-to-speech

@@ -34,8 +34,9 @@ public struct AppConfiguration: Sendable {
     public static func defaultForAppSupport(baseDirectory: URL) -> AppConfiguration {
         let support = baseDirectory.appendingPathComponent("InsightIOS", isDirectory: true)
         let bundle = ModelCatalog.recommendedBundle(forPhysicalMemoryBytes: ProcessInfo.processInfo.physicalMemory)
+        let mockMode = false
         return AppConfiguration(
-            mockMode: false,
+            mockMode: mockMode,
             modelBundle: bundle,
             databaseURL: support.appendingPathComponent("insight_app.db"),
             uploadsDirectoryURL: support.appendingPathComponent("uploads", isDirectory: true),
@@ -57,11 +58,14 @@ public struct AppConfiguration: Sendable {
 public enum RuntimeServices: Sendable {
     public enum Error: Swift.Error, LocalizedError {
         case llmModelMissing(String)
+        case whisperModelMissing(String)
 
         public var errorDescription: String? {
             switch self {
             case .llmModelMissing(let fileName):
                 "Download the on-device model (\(fileName)) before chatting offline."
+            case .whisperModelMissing(let fileName):
+                "Download the speech recognition model (\(fileName)) before using the microphone."
             }
         }
     }
@@ -73,17 +77,20 @@ public enum RuntimeServices: Sendable {
         public let vision: (any VisionServing)?
         public let recorder: any AudioRecording
         public let usesOnDeviceLLM: Bool
+        public let llmBackendDebugDescription: String
     }
 
     public static func make(for configuration: AppConfiguration) throws -> Bundle {
         if configuration.mockMode {
+            RuntimeServicesLog.info("Startup service mode: MOCK. Explicit mockMode is enabled; using mock LLM, mock STT, mock vision, mock recorder, and mock TTS.")
             return Bundle(
                 llm: MockLlmAdapter(),
                 stt: MockSttAdapter(),
                 tts: MockTtsAdapter(),
                 vision: MockVisionAdapter(),
                 recorder: MockAudioRecorder(),
-                usesOnDeviceLLM: false
+                usesOnDeviceLLM: false,
+                llmBackendDebugDescription: "LLM backend: mock."
             )
         }
 
@@ -91,34 +98,39 @@ public enum RuntimeServices: Sendable {
         guard store.isLLMReady else {
             throw Error.llmModelMissing(configuration.modelBundle.llmFileName)
         }
+        guard store.isWhisperReady else {
+            throw Error.whisperModelMissing(configuration.modelBundle.whisperFileName)
+        }
 
         let llm = LlamaCppLlmAdapter(
             modelPath: store.llmModelURL,
             runtimeConfig: configuration.llmConfig
         )
+        RuntimeServicesLog.info("Startup backend selection: \(llm.backendDebugDescription)")
 
-        let stt: any SttServing
-        let recorder: any AudioRecording
-        if store.isWhisperReady {
-            stt = WhisperSttAdapter(modelPath: store.whisperModelURL)
-            recorder = MicrophoneRecorder(config: configuration.audioConfig)
-        } else {
-            stt = MockSttAdapter()
-            recorder = MockAudioRecorder()
-        }
+        let stt: any SttServing = WhisperSttAdapter(modelPath: store.whisperModelURL)
+        let recorder: any AudioRecording = MicrophoneRecorder(config: configuration.audioConfig)
 
         let tts = VoiceRuntimeFactory.makeTts(
             config: configuration.ttsConfig,
             modelsDirectory: configuration.modelsDirectoryURL
         )
 
+        RuntimeServicesLog.info("Startup service mode: REAL. LLM=llama.cpp, STT=Whisper, Vision=Apple Vision, Recorder=AVAudioRecorder, TTS=system/XTTS.")
         return Bundle(
             llm: llm,
             stt: stt,
             tts: tts,
-            vision: MockVisionAdapter(),
+            vision: SystemVisionImageAnalyzer(),
             recorder: recorder,
-            usesOnDeviceLLM: true
+            usesOnDeviceLLM: true,
+            llmBackendDebugDescription: llm.backendDebugDescription
         )
+    }
+}
+
+private enum RuntimeServicesLog {
+    static func info(_ message: String) {
+        NSLog("[RuntimeServices] %@", message)
     }
 }

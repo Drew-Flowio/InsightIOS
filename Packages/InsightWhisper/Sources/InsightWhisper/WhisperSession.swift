@@ -1,16 +1,29 @@
 import Foundation
+import InsightRuntime
 import whisper
+
+final class WhisperContextHandle: @unchecked Sendable {
+    let context: OpaquePointer
+
+    init(context: OpaquePointer) {
+        self.context = context
+    }
+
+    deinit {
+        whisper_free(context)
+    }
+}
 
 public actor WhisperSession {
     private let modelPath: URL
-    private var context: OpaquePointer?
+    private var contextHandle: WhisperContextHandle?
 
     public init(modelPath: URL) {
         self.modelPath = modelPath
     }
 
     public func prepare() throws {
-        if context != nil { return }
+        if contextHandle != nil { return }
         guard FileManager.default.fileExists(atPath: modelPath.path) else {
             throw WhisperRuntimeError.modelNotFound(modelPath)
         }
@@ -26,12 +39,12 @@ public actor WhisperSession {
         guard let loaded = whisper_init_from_file_with_params(modelPath.path, params) else {
             throw WhisperRuntimeError.failedToLoadModel
         }
-        context = loaded
+        contextHandle = WhisperContextHandle(context: loaded)
     }
 
     public func transcribe(audioURL: URL, language: String = "en") throws -> String {
         try prepare()
-        guard let context else {
+        guard let context = contextHandle?.context else {
             throw WhisperRuntimeError.failedToLoadModel
         }
 
@@ -70,16 +83,7 @@ public actor WhisperSession {
     }
 
     public func unload() {
-        if let context {
-            whisper_free(context)
-        }
-        context = nil
-    }
-
-    deinit {
-        if let context {
-            whisper_free(context)
-        }
+        contextHandle = nil
     }
 }
 
@@ -96,5 +100,9 @@ public struct WhisperSttAdapter: SttServing, Sendable {
 
     public func transcribe(audioURL: URL) async throws -> String {
         try await session.transcribe(audioURL: audioURL)
+    }
+
+    public func unload() async {
+        await session.unload()
     }
 }

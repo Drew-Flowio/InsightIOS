@@ -9,7 +9,7 @@ enum ChatMessageRole: String, Sendable {
 struct ChatDisplayMessage: Identifiable, Equatable, Sendable {
     let id: String
     let role: ChatMessageRole
-    let content: String
+    var content: String
     let timestamp: Date
     var isStreaming: Bool
     var imageURL: URL?

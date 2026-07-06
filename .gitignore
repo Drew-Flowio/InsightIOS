@@ -3,6 +3,7 @@
 DerivedData/
 *.xcodeproj/xcuserdata/
 *.xcworkspace/xcuserdata/
+**/*.xcworkspace/xcuserdata/
 .venv-xtts/
 *.part
 .DS_Store

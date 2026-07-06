@@ -3,15 +3,34 @@ import InsightRuntime
 import LlamaSwift
 
 enum LlamaBackend {
-    private static let lock = NSLock()
-    private static var initialized = false
+    private static let logLock = NSLock()
+    private nonisolated(unsafe) static var recentLogMessage: String?
+
+    private static let initializeBackend: Void = {
+        llama_log_set({ _, message, _ in
+            guard let message else { return }
+            let text = String(cString: message).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !text.isEmpty else { return }
+            LlamaBackend.recordLogMessage(text)
+            LlamaRuntimeLog.llamaCpp(text)
+        }, nil)
+        llama_backend_init()
+    }()
 
     static func ensureInitialized() {
-        lock.lock()
-        defer { lock.unlock() }
-        guard !initialized else { return }
-        llama_backend_init()
-        initialized = true
+        _ = initializeBackend
+    }
+
+    static var lastLogMessage: String? {
+        logLock.lock()
+        defer { logLock.unlock() }
+        return recentLogMessage
+    }
+
+    private static func recordLogMessage(_ message: String) {
+        logLock.lock()
+        recentLogMessage = message
+        logLock.unlock()
     }
 }
 
@@ -27,11 +46,20 @@ final class LlamaModelHandle: @unchecked Sendable {
 
         LlamaBackend.ensureInitialized()
 
+        if let fallbackReason = loadConfig.fallbackReason {
+            LlamaRuntimeLog.info(fallbackReason)
+        }
+        LlamaRuntimeLog.info(
+            "Loading \(path.lastPathComponent) with context=\(loadConfig.contextLength), batch=\(loadConfig.batchSize), gpuLayers=\(loadConfig.gpuLayers.rawValue), threads=\(loadConfig.threads), mmap=\(loadConfig.useMemoryMapping), mlock=\(loadConfig.useMemoryLocking)."
+        )
+
         var modelParams = llama_model_default_params()
         modelParams.n_gpu_layers = loadConfig.gpuLayers.rawValue
+        modelParams.use_mmap = loadConfig.useMemoryMapping
+        modelParams.use_mlock = loadConfig.useMemoryLocking
 
         guard let model = llama_model_load_from_file(path.path, modelParams) else {
-            throw LlamaRuntimeError.failedToLoadModel(path)
+            throw LlamaRuntimeError.failedToLoadModel(path, LlamaBackend.lastLogMessage)
         }
 
         self.model = model
@@ -54,12 +82,12 @@ final class LlamaContextHandle: @unchecked Sendable {
 
         var contextParams = llama_context_default_params()
         contextParams.n_ctx = modelHandle.loadConfig.contextLength
-        contextParams.n_threads = modelHandle.loadConfig.threads
-        contextParams.n_threads_batch = modelHandle.loadConfig.threads
+        contextParams.n_threads = Int32(modelHandle.loadConfig.threads)
+        contextParams.n_threads_batch = Int32(modelHandle.loadConfig.threads)
         contextParams.n_batch = UInt32(modelHandle.loadConfig.batchSize)
 
         guard let context = llama_init_from_model(modelHandle.model, contextParams) else {
-            throw LlamaRuntimeError.failedToCreateContext
+            throw LlamaRuntimeError.failedToCreateContext(LlamaBackend.lastLogMessage)
         }
 
         self.context = context

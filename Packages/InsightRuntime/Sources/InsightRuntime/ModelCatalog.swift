@@ -52,7 +52,7 @@ public enum ModelCatalog {
         llmFileName: "Phi-3.5-mini-instruct-Q4_K_M.gguf",
         llmDownloadURL: URL(string: "https://huggingface.co/bartowski/Phi-3.5-mini-instruct-GGUF/resolve/main/Phi-3.5-mini-instruct-Q4_K_M.gguf")!,
         llmDiskBytes: 2_400_000_000,
-        llmContextLength: 3072,
+        llmContextLength: 1536,
         whisperFileName: "ggml-base.en.bin",
         whisperDownloadURL: URL(string: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin")!,
         whisperDiskBytes: 148_000_000,
@@ -72,7 +72,7 @@ public enum ModelCatalog {
         llmFileName: "Phi-3.5-mini-instruct-Q4_K_S.gguf",
         llmDownloadURL: URL(string: "https://huggingface.co/bartowski/Phi-3.5-mini-instruct-GGUF/resolve/main/Phi-3.5-mini-instruct-Q4_K_S.gguf")!,
         llmDiskBytes: 2_100_000_000,
-        llmContextLength: 2048,
+        llmContextLength: 1536,
         whisperFileName: primaryHighQuality.whisperFileName,
         whisperDownloadURL: primaryHighQuality.whisperDownloadURL,
         whisperDiskBytes: primaryHighQuality.whisperDiskBytes,
@@ -95,7 +95,7 @@ public enum ModelCatalog {
         llmFileName: "Qwen2.5-1.5B-Instruct-Q4_K_M.gguf",
         llmDownloadURL: URL(string: "https://huggingface.co/bartowski/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/Qwen2.5-1.5B-Instruct-Q4_K_M.gguf")!,
         llmDiskBytes: 1_000_000_000,
-        llmContextLength: 2048,
+        llmContextLength: 1536,
         whisperFileName: primaryHighQuality.whisperFileName,
         whisperDownloadURL: primaryHighQuality.whisperDownloadURL,
         whisperDiskBytes: primaryHighQuality.whisperDiskBytes,
@@ -115,15 +115,16 @@ public enum ModelCatalog {
     }
 
     public static func llmConfig(for bundle: ModelBundle) -> LlmRuntimeConfig {
-        let isHighQuality = bundle.llmFileName.contains("Q4_K_M")
+        let maxTokens = bundle == primaryHighQuality ? 512 : 448
         return LlmRuntimeConfig(
             modelFileName: bundle.llmFileName,
             contextLength: bundle.llmContextLength,
-            maxTokens: isHighQuality ? 320 : 256,
-            temperature: 0.62,
-            topP: 0.90,
-            topK: 50,
-            repeatPenalty: 1.08,
+            maxTokens: maxTokens,
+            batchSize: 64,
+            temperature: 0.2,
+            topP: 0.88,
+            topK: 40,
+            repeatPenalty: 1.10,
             gpuLayers: -1
         )
     }

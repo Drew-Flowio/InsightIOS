@@ -12,7 +12,7 @@ public struct VisualContext: Sendable, Equatable {
 
     public func promptBlock() -> String {
         """
-        What the user is showing you (from their attached photo — keep this in mind for follow-up questions until they attach a new photo):
+        Factual image description for the currently attached photo. Use this as evidence only; do not invent details beyond it.
         \(caption)
         """
     }

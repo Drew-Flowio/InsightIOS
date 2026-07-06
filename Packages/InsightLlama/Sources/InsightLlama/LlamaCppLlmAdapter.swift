@@ -4,9 +4,12 @@ import InsightRuntime
 
 public final class LlamaCppLlmAdapter: LlmServing, @unchecked Sendable {
     private let session: LlamaSession
+    public let backendDebugDescription: String
 
     public init(modelPath: URL, runtimeConfig: LlmRuntimeConfig) {
-        session = LlamaSession(modelPath: modelPath, runtimeConfig: runtimeConfig)
+        let backendSelection = LlamaBackendSelection.select(from: runtimeConfig)
+        self.backendDebugDescription = backendSelection.debugDescription
+        session = LlamaSession(modelPath: modelPath, backendSelection: backendSelection)
     }
 
     public func prepare() async throws {

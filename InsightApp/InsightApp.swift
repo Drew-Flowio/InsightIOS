@@ -4,7 +4,7 @@ import SwiftUI
 struct InsightApp: App {
     var body: some Scene {
         WindowGroup {
-            MainChatView()
+            SplashView()
         }
     }
 }
