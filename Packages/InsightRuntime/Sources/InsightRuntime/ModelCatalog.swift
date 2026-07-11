@@ -2,16 +2,11 @@ import Foundation
 
 /// Curated on-device models for Insight on iPhone.
 ///
-/// Selection criteria (matching `docs/01-model-choice.md`):
-/// - Permissive license only (MIT / Apache-2.0)
-/// - Practical reasoning for hands-on safety Q&A
-/// - Fits iPhone RAM with sequential model loading (LLM ↔ vision ↔ STT never all resident)
+/// **Production primary:** Phi-4-mini-instruct Q4_K_M on 8 GB devices; Q4_K_S on 6 GB devices.
 ///
-/// **Primary:** Phi-3.5-mini-instruct Q4_K_M on 8 GB devices for the best reasoning quality.
-/// Uses Q4_K_S on 6 GB devices for smoother inference.
+/// **Internal fallback:** Phi-3.5-mini-instruct — not exposed in customer UI.
 ///
-/// **Compact:** Qwen2.5-1.5B-instruct — Apache-2.0 fallback for 6 GB devices. Faster, slightly
-/// shallower reasoning. Do **not** use Qwen2.5-3B (research license only).
+/// **Compact:** Qwen2.5-1.5B-instruct — low-RAM fallback.
 public enum ModelCatalog {
     public enum Profile: String, Sendable, CaseIterable, Identifiable {
         case primary
@@ -20,10 +15,29 @@ public enum ModelCatalog {
         public var id: String { rawValue }
     }
 
+    public enum ModelTier: String, Sendable, CaseIterable, Identifiable {
+        case primary
+        case fallbackPrimary
+        case compact
+
+        public var id: String { rawValue }
+    }
+
+    public struct ModelProvenance: Sendable, Equatable {
+        public let originalPublisher: String
+        public let ggufPublisher: String
+        public let quantization: String
+        public let modelLicense: String
+        public let ggufNotes: String
+    }
+
     public struct ModelBundle: Sendable, Equatable {
+        public let tier: ModelTier
         public let profile: Profile
+        /// Internal catalog label; customer setup copy uses `ModelCatalog.customerSetupLabel`.
         public let displayName: String
         public let license: String
+        public let provenance: ModelProvenance
         public let llmFileName: String
         public let llmDownloadURL: URL
         public let llmDiskBytes: Int64
@@ -44,68 +58,179 @@ public enum ModelCatalog {
         }
     }
 
-    /// Best conversational quality on iPhone 15 Pro / 16 (8 GB).
+    /// Customer-facing setup label — no model names or runtime details.
+    public static let customerSetupLabel = "Offgrid Minds"
+
+    private enum SharedRuntimeAssets {
+        static let whisperFileName = "ggml-base.en.bin"
+        static let whisperDownloadURL = URL(string: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin")!
+        static let whisperDiskBytes: Int64 = 147_964_211
+        static let referenceVoiceFileName = "insight_reference_voice.wav"
+        static let visionModelFileName = "SmolVLM-500M-Instruct-Q8_0.gguf"
+        static let visionMmprojFileName = "mmproj-SmolVLM-500M-Instruct-Q8_0.gguf"
+        static let visionModelDownloadURL = URL(string: "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct-gguf/resolve/main/SmolVLM-500M-Instruct-Q8_0.gguf")!
+        static let visionMmprojDownloadURL = URL(string: "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct-gguf/resolve/main/mmproj-SmolVLM-500M-Instruct-Q8_0.gguf")!
+    }
+
+    private static let phi4Provenance = ModelProvenance(
+        originalPublisher: "microsoft/Phi-4-mini-instruct",
+        ggufPublisher: "bartowski/microsoft_Phi-4-mini-instruct-GGUF",
+        quantization: "Q4_K_M (llama.cpp imatrix)",
+        modelLicense: "MIT",
+        ggufNotes: "Community imatrix GGUF conversion by bartowski; inherits MIT license from the Microsoft base model."
+    )
+
+    private static let phi35Provenance = ModelProvenance(
+        originalPublisher: "microsoft/Phi-3.5-mini-instruct",
+        ggufPublisher: "bartowski/Phi-3.5-mini-instruct-GGUF",
+        quantization: "Q4_K_M (llama.cpp imatrix)",
+        modelLicense: "MIT",
+        ggufNotes: "Community imatrix GGUF conversion by bartowski; inherits MIT license from the Microsoft base model."
+    )
+
+    private static let qwenProvenance = ModelProvenance(
+        originalPublisher: "Qwen/Qwen2.5-1.5B-Instruct",
+        ggufPublisher: "bartowski/Qwen2.5-1.5B-Instruct-GGUF",
+        quantization: "Q4_K_M (llama.cpp imatrix)",
+        modelLicense: "Apache-2.0",
+        ggufNotes: "Community imatrix GGUF conversion by bartowski; inherits Apache-2.0 license from the Qwen base model."
+    )
+
+    /// Production Phi-4 for 8 GB iPhones.
     public static let primaryHighQuality = ModelBundle(
+        tier: .primary,
         profile: .primary,
-        displayName: "Phi-3.5 Mini (best quality)",
+        displayName: "Phi-4-mini-instruct Q4_K_M",
         license: "MIT",
-        llmFileName: "Phi-3.5-mini-instruct-Q4_K_M.gguf",
-        llmDownloadURL: URL(string: "https://huggingface.co/bartowski/Phi-3.5-mini-instruct-GGUF/resolve/main/Phi-3.5-mini-instruct-Q4_K_M.gguf")!,
-        llmDiskBytes: 2_400_000_000,
+        provenance: phi4Provenance,
+        llmFileName: "microsoft_Phi-4-mini-instruct-Q4_K_M.gguf",
+        llmDownloadURL: URL(string: "https://huggingface.co/bartowski/microsoft_Phi-4-mini-instruct-GGUF/resolve/main/microsoft_Phi-4-mini-instruct-Q4_K_M.gguf")!,
+        llmDiskBytes: 2_491_874_688,
         llmContextLength: 1536,
-        whisperFileName: "ggml-base.en.bin",
-        whisperDownloadURL: URL(string: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin")!,
-        whisperDiskBytes: 148_000_000,
-        referenceVoiceFileName: "insight_reference_voice.wav",
-        visionModelFileName: "SmolVLM-500M-Instruct-Q8_0.gguf",
-        visionMmprojFileName: "mmproj-SmolVLM-500M-Instruct-Q8_0.gguf",
-        visionModelDownloadURL: URL(string: "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct-gguf/resolve/main/SmolVLM-500M-Instruct-Q8_0.gguf")!,
-        visionMmprojDownloadURL: URL(string: "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct-gguf/resolve/main/mmproj-SmolVLM-500M-Instruct-Q8_0.gguf")!,
+        whisperFileName: SharedRuntimeAssets.whisperFileName,
+        whisperDownloadURL: SharedRuntimeAssets.whisperDownloadURL,
+        whisperDiskBytes: SharedRuntimeAssets.whisperDiskBytes,
+        referenceVoiceFileName: SharedRuntimeAssets.referenceVoiceFileName,
+        visionModelFileName: SharedRuntimeAssets.visionModelFileName,
+        visionMmprojFileName: SharedRuntimeAssets.visionMmprojFileName,
+        visionModelDownloadURL: SharedRuntimeAssets.visionModelDownloadURL,
+        visionMmprojDownloadURL: SharedRuntimeAssets.visionMmprojDownloadURL,
         minimumDeviceRAMGB: 7
     )
 
-    /// Faster variant for 6 GB iPhones while staying on Phi-3.5.
+    /// Production Phi-4 for 6 GB iPhones.
     public static let primaryEfficient = ModelBundle(
+        tier: .primary,
         profile: .primary,
-        displayName: "Phi-3.5 Mini (efficient)",
+        displayName: "Phi-4-mini-instruct Q4_K_S",
         license: "MIT",
-        llmFileName: "Phi-3.5-mini-instruct-Q4_K_S.gguf",
-        llmDownloadURL: URL(string: "https://huggingface.co/bartowski/Phi-3.5-mini-instruct-GGUF/resolve/main/Phi-3.5-mini-instruct-Q4_K_S.gguf")!,
-        llmDiskBytes: 2_100_000_000,
+        provenance: ModelProvenance(
+            originalPublisher: phi4Provenance.originalPublisher,
+            ggufPublisher: phi4Provenance.ggufPublisher,
+            quantization: "Q4_K_S (llama.cpp imatrix)",
+            modelLicense: phi4Provenance.modelLicense,
+            ggufNotes: phi4Provenance.ggufNotes
+        ),
+        llmFileName: "microsoft_Phi-4-mini-instruct-Q4_K_S.gguf",
+        llmDownloadURL: URL(string: "https://huggingface.co/bartowski/microsoft_Phi-4-mini-instruct-GGUF/resolve/main/microsoft_Phi-4-mini-instruct-Q4_K_S.gguf")!,
+        llmDiskBytes: 2_337_734_016,
         llmContextLength: 1536,
-        whisperFileName: primaryHighQuality.whisperFileName,
-        whisperDownloadURL: primaryHighQuality.whisperDownloadURL,
-        whisperDiskBytes: primaryHighQuality.whisperDiskBytes,
-        referenceVoiceFileName: primaryHighQuality.referenceVoiceFileName,
-        visionModelFileName: primaryHighQuality.visionModelFileName,
-        visionMmprojFileName: primaryHighQuality.visionMmprojFileName,
-        visionModelDownloadURL: primaryHighQuality.visionModelDownloadURL,
-        visionMmprojDownloadURL: primaryHighQuality.visionMmprojDownloadURL,
+        whisperFileName: SharedRuntimeAssets.whisperFileName,
+        whisperDownloadURL: SharedRuntimeAssets.whisperDownloadURL,
+        whisperDiskBytes: SharedRuntimeAssets.whisperDiskBytes,
+        referenceVoiceFileName: SharedRuntimeAssets.referenceVoiceFileName,
+        visionModelFileName: SharedRuntimeAssets.visionModelFileName,
+        visionMmprojFileName: SharedRuntimeAssets.visionMmprojFileName,
+        visionModelDownloadURL: SharedRuntimeAssets.visionModelDownloadURL,
+        visionMmprojDownloadURL: SharedRuntimeAssets.visionMmprojDownloadURL,
         minimumDeviceRAMGB: 6
     )
 
-    /// Backward-compatible alias.
     public static let primary = primaryHighQuality
 
-    /// Faster fallback for 6 GB iPhones (iPhone 13/14 base, etc.).
+    /// Internal Phi-3.5 fallback for 8 GB devices.
+    public static let fallbackPrimaryHighQuality = ModelBundle(
+        tier: .fallbackPrimary,
+        profile: .primary,
+        displayName: "Phi-3.5-mini-instruct Q4_K_M (fallback)",
+        license: "MIT",
+        provenance: phi35Provenance,
+        llmFileName: "Phi-3.5-mini-instruct-Q4_K_M.gguf",
+        llmDownloadURL: URL(string: "https://huggingface.co/bartowski/Phi-3.5-mini-instruct-GGUF/resolve/main/Phi-3.5-mini-instruct-Q4_K_M.gguf")!,
+        llmDiskBytes: 2_393_232_672,
+        llmContextLength: 1536,
+        whisperFileName: SharedRuntimeAssets.whisperFileName,
+        whisperDownloadURL: SharedRuntimeAssets.whisperDownloadURL,
+        whisperDiskBytes: SharedRuntimeAssets.whisperDiskBytes,
+        referenceVoiceFileName: SharedRuntimeAssets.referenceVoiceFileName,
+        visionModelFileName: SharedRuntimeAssets.visionModelFileName,
+        visionMmprojFileName: SharedRuntimeAssets.visionMmprojFileName,
+        visionModelDownloadURL: SharedRuntimeAssets.visionModelDownloadURL,
+        visionMmprojDownloadURL: SharedRuntimeAssets.visionMmprojDownloadURL,
+        minimumDeviceRAMGB: 7
+    )
+
+    /// Internal Phi-3.5 fallback for 6 GB devices.
+    public static let fallbackPrimaryEfficient = ModelBundle(
+        tier: .fallbackPrimary,
+        profile: .primary,
+        displayName: "Phi-3.5-mini-instruct Q4_K_S (fallback)",
+        license: "MIT",
+        provenance: ModelProvenance(
+            originalPublisher: phi35Provenance.originalPublisher,
+            ggufPublisher: phi35Provenance.ggufPublisher,
+            quantization: "Q4_K_S (llama.cpp imatrix)",
+            modelLicense: phi35Provenance.modelLicense,
+            ggufNotes: phi35Provenance.ggufNotes
+        ),
+        llmFileName: "Phi-3.5-mini-instruct-Q4_K_S.gguf",
+        llmDownloadURL: URL(string: "https://huggingface.co/bartowski/Phi-3.5-mini-instruct-GGUF/resolve/main/Phi-3.5-mini-instruct-Q4_K_S.gguf")!,
+        llmDiskBytes: 2_188_760_352,
+        llmContextLength: 1536,
+        whisperFileName: SharedRuntimeAssets.whisperFileName,
+        whisperDownloadURL: SharedRuntimeAssets.whisperDownloadURL,
+        whisperDiskBytes: SharedRuntimeAssets.whisperDiskBytes,
+        referenceVoiceFileName: SharedRuntimeAssets.referenceVoiceFileName,
+        visionModelFileName: SharedRuntimeAssets.visionModelFileName,
+        visionMmprojFileName: SharedRuntimeAssets.visionMmprojFileName,
+        visionModelDownloadURL: SharedRuntimeAssets.visionModelDownloadURL,
+        visionMmprojDownloadURL: SharedRuntimeAssets.visionMmprojDownloadURL,
+        minimumDeviceRAMGB: 6
+    )
+
+    /// Backward-compatible aliases for the internal fallback tier.
+    public static let rollbackPrimaryHighQuality = fallbackPrimaryHighQuality
+    public static let rollbackPrimaryEfficient = fallbackPrimaryEfficient
+
+    /// Low-RAM fallback for smaller iPhones.
     public static let compact = ModelBundle(
+        tier: .compact,
         profile: .compact,
-        displayName: "Qwen2.5 1.5B (compact)",
+        displayName: "Qwen2.5-1.5B-Instruct Q4_K_M (compact)",
         license: "Apache-2.0",
+        provenance: qwenProvenance,
         llmFileName: "Qwen2.5-1.5B-Instruct-Q4_K_M.gguf",
         llmDownloadURL: URL(string: "https://huggingface.co/bartowski/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/Qwen2.5-1.5B-Instruct-Q4_K_M.gguf")!,
-        llmDiskBytes: 1_000_000_000,
+        llmDiskBytes: 986_048_768,
         llmContextLength: 1536,
-        whisperFileName: primaryHighQuality.whisperFileName,
-        whisperDownloadURL: primaryHighQuality.whisperDownloadURL,
-        whisperDiskBytes: primaryHighQuality.whisperDiskBytes,
-        referenceVoiceFileName: primaryHighQuality.referenceVoiceFileName,
-        visionModelFileName: primaryHighQuality.visionModelFileName,
-        visionMmprojFileName: primaryHighQuality.visionMmprojFileName,
-        visionModelDownloadURL: primaryHighQuality.visionModelDownloadURL,
-        visionMmprojDownloadURL: primaryHighQuality.visionMmprojDownloadURL,
+        whisperFileName: SharedRuntimeAssets.whisperFileName,
+        whisperDownloadURL: SharedRuntimeAssets.whisperDownloadURL,
+        whisperDiskBytes: SharedRuntimeAssets.whisperDiskBytes,
+        referenceVoiceFileName: SharedRuntimeAssets.referenceVoiceFileName,
+        visionModelFileName: SharedRuntimeAssets.visionModelFileName,
+        visionMmprojFileName: SharedRuntimeAssets.visionMmprojFileName,
+        visionModelDownloadURL: SharedRuntimeAssets.visionModelDownloadURL,
+        visionMmprojDownloadURL: SharedRuntimeAssets.visionMmprojDownloadURL,
         minimumDeviceRAMGB: 4
     )
+
+    public static let allLLMBundles: [ModelBundle] = [
+        primaryHighQuality,
+        primaryEfficient,
+        fallbackPrimaryHighQuality,
+        fallbackPrimaryEfficient,
+        compact,
+    ]
 
     public static func recommendedBundle(forPhysicalMemoryBytes bytes: UInt64) -> ModelBundle {
         let ramGB = Double(bytes) / 1_073_741_824.0
@@ -114,8 +239,27 @@ public enum ModelCatalog {
         return compact
     }
 
+    public static func fallbackBundle(forPhysicalMemoryBytes bytes: UInt64) -> ModelBundle {
+        let ramGB = Double(bytes) / 1_073_741_824.0
+        if ramGB >= 7.5 { return fallbackPrimaryHighQuality }
+        if ramGB >= 5.5 { return fallbackPrimaryEfficient }
+        return compact
+    }
+
+    public static func rollbackBundle(forPhysicalMemoryBytes bytes: UInt64) -> ModelBundle {
+        fallbackBundle(forPhysicalMemoryBytes: bytes)
+    }
+
     public static func llmConfig(for bundle: ModelBundle) -> LlmRuntimeConfig {
-        let maxTokens = bundle == primaryHighQuality ? 512 : 448
+        let maxTokens: Int
+        if bundle.tier == .compact {
+            maxTokens = 448
+        } else if bundle.llmFileName.contains("Q4_K_M") {
+            maxTokens = 512
+        } else {
+            maxTokens = 448
+        }
+
         return LlmRuntimeConfig(
             modelFileName: bundle.llmFileName,
             contextLength: bundle.llmContextLength,
@@ -147,6 +291,5 @@ public enum ModelCatalog {
         )
     }
 
-    /// Runtime target for Step 4+ llama.cpp integration.
     public static let inferenceBackend = "llama.cpp (Metal)"
 }

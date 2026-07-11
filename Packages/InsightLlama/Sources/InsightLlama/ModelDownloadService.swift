@@ -23,11 +23,11 @@ public struct ModelFileStore: Sendable {
     }
 
     public var isLLMReady: Bool {
-        isCompleteModelFile(at: llmModelURL, expectedBytes: bundle.llmDiskBytes)
+        ModelFileIntegrity.isValidModelFile(at: llmModelURL, expectedBytes: bundle.llmDiskBytes)
     }
 
     public var isWhisperReady: Bool {
-        isCompleteModelFile(at: whisperModelURL, expectedBytes: bundle.whisperDiskBytes)
+        ModelFileIntegrity.isValidModelFile(at: whisperModelURL, expectedBytes: bundle.whisperDiskBytes)
     }
 
     public var isReferenceVoiceReady: Bool {
@@ -107,7 +107,7 @@ public enum ModelDownloadService {
         try FileManager.default.createDirectory(at: modelsDirectory, withIntermediateDirectories: true)
 
         if FileManager.default.fileExists(atPath: destination.path) {
-            if isCompleteModelFile(at: destination, expectedBytes: expectedBytes) {
+            if ModelFileIntegrity.isValidModelFile(at: destination, expectedBytes: expectedBytes) {
                 onProgress?(ModelDownloadProgress(bytesWritten: expectedBytes, totalBytes: expectedBytes))
                 return destination
             }
@@ -156,9 +156,13 @@ public enum ModelDownloadService {
 
         onProgress?(ModelDownloadProgress(bytesWritten: bytesWritten, totalBytes: expectedLength))
 
-        guard bytesWritten >= minimumAcceptableBytes(for: expectedLength) else {
+        let validationExpectedBytes = expectedLength > 0 ? expectedLength : expectedBytes
+        guard ModelFileIntegrity.isValidModelFile(at: temporaryURL, expectedBytes: validationExpectedBytes) else {
             try? FileManager.default.removeItem(at: temporaryURL)
-            throw Error.downloadFailed("received \(bytesWritten) bytes, expected about \(expectedLength) bytes")
+            let range = ModelFileIntegrity.acceptableByteRange(for: validationExpectedBytes)
+            throw Error.downloadFailed(
+                "received \(bytesWritten) bytes, expected \(validationExpectedBytes) bytes (acceptable range \(range.lowerBound)...\(range.upperBound))"
+            )
         }
 
         if FileManager.default.fileExists(atPath: destination.path) {
@@ -167,19 +171,4 @@ public enum ModelDownloadService {
         try FileManager.default.moveItem(at: temporaryURL, to: destination)
         return destination
     }
-}
-
-private func isCompleteModelFile(at url: URL, expectedBytes: Int64) -> Bool {
-    guard
-        let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
-        let fileSize = attributes[.size] as? NSNumber
-    else {
-        return false
-    }
-
-    return fileSize.int64Value >= minimumAcceptableBytes(for: expectedBytes)
-}
-
-private func minimumAcceptableBytes(for expectedBytes: Int64) -> Int64 {
-    Int64(Double(expectedBytes) * 0.90)
 }

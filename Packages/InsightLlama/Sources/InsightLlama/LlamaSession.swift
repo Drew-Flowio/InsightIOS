@@ -2,7 +2,7 @@ import Foundation
 import InsightCore
 import InsightRuntime
 
-/// Loads Phi-3.5 once and runs streaming chat inference with the selected llama.cpp backend.
+/// Loads the selected on-device LLM once and runs chat inference with the selected llama.cpp backend.
 public actor LlamaSession {
     private let modelPath: URL
     private var runtimeConfig: LlmRuntimeConfig

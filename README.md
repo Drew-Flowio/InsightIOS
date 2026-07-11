@@ -14,7 +14,7 @@ open InsightIOS.xcodeproj
 
 Launch the app on a device or simulator. The setup overlay downloads:
 
-- Phi-3.5-mini (or compact fallback) for on-device reasoning
+- Offgrid Minds offline assistant (Phi-4 on supported iPhones, compact fallback on low-memory devices)
 - whisper.cpp `ggml-base.en.bin` for voice input
 
 ## macOS XTTS setup (local TTS for development)
@@ -48,4 +48,4 @@ InsightIOS/
 
 - Xcode 16+ (accept license: `sudo xcodebuild -license`)
 - iOS 17+
-- ~3 GB free storage for on-device models
+- ~3.5 GB free storage for on-device models (Phi-4 candidate + whisper)

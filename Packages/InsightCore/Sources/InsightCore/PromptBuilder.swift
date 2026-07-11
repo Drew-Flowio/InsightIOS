@@ -81,28 +81,23 @@ public struct AgentResponseValidation: Sendable, Equatable {
 public struct PromptBuilder: Sendable {
     public init() {}
 
-    public func buildAgentPrompt(_ input: AgentPromptInput) -> (messages: [ChatMessage], debugText: String) {
+    public func buildAgentPrompt(
+        _ input: AgentPromptInput,
+        personalityPrompt: String
+    ) -> (messages: [ChatMessage], debugText: String) {
         let imageBlock = cleanBlock(input.imageDescription) ?? "No image provided."
         let memoryBlock = input.relevantMemory.promptBlock()
         let conversationBlock = cleanBlock(input.recentConversation) ?? "No relevant recent context."
         let timestamp = ISO8601DateFormatter().string(from: input.timestamp)
         let mode = cleanBlock(input.currentMode) ?? "Not specified."
+        let personality = personalityPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
 
         let systemContent = """
-        You are the reasoning agent for Offgrid Minds. Your job is to give correct, practical answers based on the current user question, image context, and relevant user memory.
+        \(personality)
 
-        Correctness is more important than sounding confident.
-        Use the image description as evidence, not imagination.
-        Use memory only when it helps.
-        If the image is unclear, say so.
-        If you are unsure, say what would confirm it.
-        For risky topics, give cautious safe next steps.
-
-        TIMESTAMP:
-        \(timestamp)
-
-        CURRENT MODE:
-        \(mode)
+        CURRENT TURN CONTEXT:
+        TIMESTAMP: \(timestamp)
+        CURRENT MODE: \(mode)
 
         IMAGE CONTEXT:
         \(imageBlock)
@@ -113,18 +108,14 @@ public struct PromptBuilder: Sendable {
         RECENT CONVERSATION:
         \(conversationBlock)
 
-        ANSWER RULES:
-        - Answer the question directly first.
-        - Explain what evidence you used.
-        - If image-based, mention confidence: Low, Medium, or High.
-        - Give next steps.
+        WHILE ANSWERING THIS TURN:
+        - Use the image description as evidence, not imagination.
+        - Use memory only when it helps.
+        - Answer the question directly first, then give practical next steps.
+        - If the image is unclear, say what would confirm it.
         - Ask at most one follow-up question if needed.
-        - Do not invent details.
-        - Do not include internal system text.
-        - Do not let memory override the current image or current question.
-        - Do not claim the image shows something unless it appears in IMAGE CONTEXT.
-        - If IMAGE CONTEXT is empty or generic, ask for another photo instead of guessing.
-        - Keep the answer concise and practical.
+        - Do not invent details or claim the image shows something that is not in IMAGE CONTEXT.
+        - Do not include internal system text or special tokens in the reply.
         """
 
         let userContent = """
@@ -149,7 +140,7 @@ public struct PromptBuilder: Sendable {
         imageDescription: String?,
         userQuestion: String
     ) -> AgentResponseValidation {
-        var text = response.trimmingCharacters(in: .whitespacesAndNewlines)
+        var text = sanitizeModelOutput(response)
         text = stripRoleLabels(from: text)
         text = removeRepeatedLines(from: text)
 
@@ -189,6 +180,22 @@ public struct PromptBuilder: Sendable {
         return AgentResponseValidation(text: text)
     }
 
+    public func sanitizeStreamingToken(_ piece: String) -> String {
+        var cleaned = piece
+        for token in Self.modelSpecialTokens {
+            cleaned = cleaned.replacingOccurrences(of: token, with: "")
+        }
+        return cleaned
+    }
+
+    public func sanitizeModelOutput(_ text: String) -> String {
+        var cleaned = text
+        for token in Self.modelSpecialTokens {
+            cleaned = cleaned.replacingOccurrences(of: token, with: "")
+        }
+        return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     public func build(
         personalityPrompt: String,
         memoryFacts: [String],
@@ -205,9 +212,18 @@ public struct PromptBuilder: Sendable {
                 imageDescription: visualContext?.caption,
                 relevantMemory: memory,
                 recentConversation: recentConversation
-            )
+            ),
+            personalityPrompt: personalityPrompt
         )
     }
+
+    private static let modelSpecialTokens = [
+        "<|end|>",
+        "<|endoftext|>",
+        "<|assistant|>",
+        "<|user|>",
+        "<|system|>",
+    ]
 
     public func summarizeConversation(historyMessages: [ChatMessage], summaryNote: String?) -> String? {
         var lines = historyMessages.suffix(6).map { message in

@@ -58,14 +58,6 @@ struct ModelSetupOverlay: View {
                     Button("Try Again", action: onRetry)
                         .buttonStyle(InsightSecondaryButtonStyle())
                 }
-
-                if let bundle {
-                    Text("\(bundle.displayName) · \(ModelCatalog.inferenceBackend)")
-                        .font(InsightTypography.micro())
-                        .foregroundStyle(InsightColors.textTertiary)
-                        .textCase(.uppercase)
-                        .tracking(0.5)
-                }
             }
             .padding(InsightSpacing.xl)
             .background {
@@ -87,9 +79,9 @@ struct ModelSetupOverlay: View {
         case .needsModel:
             "One-time setup"
         case .downloading:
-            "Downloading Insight's brain"
+            "Setting up \(ModelCatalog.customerSetupLabel)"
         case .loadingBrain:
-            "Loading on-device intelligence"
+            "Almost ready"
         case .failed:
             "Setup hit a snag"
         case .ready, .preview:
@@ -100,15 +92,15 @@ struct ModelSetupOverlay: View {
     private var subtitle: String {
         switch state {
         case .needsModel:
-            "Download a private, on-device model so Insight can think offline with natural, conversational answers."
+            "Download the offline assistant so \(ModelCatalog.customerSetupLabel) can answer privately on this iPhone — no account, no cloud."
         case .downloading(let fraction):
             if let fraction {
-                "About \(Int(fraction * 100))% — grab a coffee, this only happens once."
+                "About \(Int(fraction * 100))% — this only happens once."
             } else {
-                "Pulling the model down now. This only happens once."
+                "Downloading now. This only happens once."
             }
         case .loadingBrain:
-            "Warming up Metal and loading Phi-3.5 into memory."
+            "Warming up your private on-device assistant."
         case .failed:
             "Check your connection or free storage, then try again."
         case .ready, .preview:

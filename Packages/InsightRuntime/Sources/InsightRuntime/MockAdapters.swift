@@ -32,6 +32,7 @@ public final class MockLlmAdapter: LlmServing, @unchecked Sendable {
         onToken: (@Sendable (String) -> Void)?,
         shouldCancel: (@Sendable () -> Bool)?
     ) async throws -> String {
+        _ = messages
         let reply: String = lock.withLock {
             defer { callCount += 1 }
             return replies[callCount % replies.count]
@@ -42,7 +43,7 @@ public final class MockLlmAdapter: LlmServing, @unchecked Sendable {
 
         for (index, word) in words.enumerated() {
             if shouldCancel?() == true {
-                break
+                throw MockLlmCancellation()
             }
             let piece = word + (index < words.count - 1 ? " " : "")
             pieces.append(piece)
@@ -53,6 +54,8 @@ public final class MockLlmAdapter: LlmServing, @unchecked Sendable {
         return pieces.joined().trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
+
+struct MockLlmCancellation: Error {}
 
 public struct MockSttAdapter: SttServing {
     public init() {}

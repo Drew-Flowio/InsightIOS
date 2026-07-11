@@ -304,6 +304,7 @@ public actor InsightEngine {
         InsightEngineLog.info("Turn \(turnID) starting: source=\(source), recordUser=\(recordUser), existingMessages=\(sessionManager.messageCount()).")
 
         let activePrompt = repository.getActivePromptVersion()
+        let personalityPrompt = activePrompt?.content ?? DefaultPrompts.bundledSystemPrompt()
         let relevantMemory = retrieveRelevantMemory(for: utterance)
         let (historyMessages, summaryNote) = sessionManager.getPromptHistoryMessages()
         let recentConversation = promptBuilder.summarizeConversation(
@@ -319,7 +320,8 @@ public actor InsightEngine {
                 recentConversation: recentConversation,
                 timestamp: Date(),
                 currentMode: source
-            )
+            ),
+            personalityPrompt: personalityPrompt
         )
 
         logAgentDebug(
@@ -340,11 +342,30 @@ public actor InsightEngine {
         await stt.unload()
 
         let token = cancelToken
-        let rawReplyText = try await llm.generate(
-            messages: messages,
-            onToken: nil,
-            shouldCancel: { token.isCancelled }
-        )
+        let streamAccumulator = StreamAccumulator()
+        let promptFormatter = promptBuilder
+        var rawReplyText = ""
+
+        do {
+            rawReplyText = try await llm.generate(
+                messages: messages,
+                onToken: { piece in
+                    guard !token.isCancelled else { return }
+                    let cleaned = promptFormatter.sanitizeStreamingToken(piece)
+                    guard !cleaned.isEmpty else { return }
+                    streamAccumulator.append(cleaned)
+                    onToken?(cleaned)
+                },
+                shouldCancel: { token.isCancelled }
+            )
+        } catch {
+            if token.isCancelled {
+                rawReplyText = streamAccumulator.text
+            } else {
+                throw error
+            }
+        }
+
         InsightEngineLog.info("Turn \(turnID) raw model response: \(rawReplyText)")
         InsightEngineLog.info("Turn \(turnID) LLM generation returned: chars=\(rawReplyText.count), cancelled=\(token.isCancelled).")
 
@@ -358,9 +379,6 @@ public actor InsightEngine {
             InsightEngineLog.info("Turn \(turnID) response validation note: \(reason)")
         }
         let replyText = validation.text
-        if !replyText.isEmpty, !cancelled {
-            onToken?(replyText)
-        }
         let latencyMs = Int((CFAbsoluteTimeGetCurrent() - started) * 1000)
 
         _ = sessionManager.recordAssistantMessage(
@@ -558,6 +576,14 @@ public actor InsightEngine {
 private enum InsightEngineLog {
     static func info(_ message: String) {
         NSLog("[InsightEngine] %@", message)
+    }
+}
+
+private final class StreamAccumulator: @unchecked Sendable {
+    private(set) var text = ""
+
+    func append(_ piece: String) {
+        text += piece
     }
 }
 

@@ -33,15 +33,41 @@ public struct AppConfiguration: Sendable {
 
     public static func defaultForAppSupport(baseDirectory: URL) -> AppConfiguration {
         let support = baseDirectory.appendingPathComponent("InsightIOS", isDirectory: true)
-        let bundle = ModelCatalog.recommendedBundle(forPhysicalMemoryBytes: ProcessInfo.processInfo.physicalMemory)
+        let modelsDirectory = support.appendingPathComponent("models", isDirectory: true)
+        let bundle = resolvedModelBundle(
+            forPhysicalMemoryBytes: ProcessInfo.processInfo.physicalMemory,
+            modelsDirectory: modelsDirectory
+        )
         let mockMode = false
         return AppConfiguration(
             mockMode: mockMode,
             modelBundle: bundle,
             databaseURL: support.appendingPathComponent("insight_app.db"),
             uploadsDirectoryURL: support.appendingPathComponent("uploads", isDirectory: true),
-            modelsDirectoryURL: support.appendingPathComponent("models", isDirectory: true)
+            modelsDirectoryURL: modelsDirectory
         )
+    }
+
+    /// Uses the production bundle when installed; otherwise a ready internal fallback.
+    static func resolvedModelBundle(
+        forPhysicalMemoryBytes bytes: UInt64,
+        modelsDirectory: URL
+    ) -> ModelCatalog.ModelBundle {
+        let recommended = ModelCatalog.recommendedBundle(forPhysicalMemoryBytes: bytes)
+        let recommendedStore = ModelFileStore(modelsDirectory: modelsDirectory, bundle: recommended)
+        if recommendedStore.isLLMReady {
+            return recommended
+        }
+
+        let fallback = ModelCatalog.fallbackBundle(forPhysicalMemoryBytes: bytes)
+        if fallback.llmFileName != recommended.llmFileName {
+            let fallbackStore = ModelFileStore(modelsDirectory: modelsDirectory, bundle: fallback)
+            if fallbackStore.isLLMReady {
+                return fallback
+            }
+        }
+
+        return recommended
     }
 
     public var modelStore: ModelFileStore {
