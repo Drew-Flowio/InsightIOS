@@ -8,6 +8,7 @@ struct StatusIndicatorView: View {
     var onOpenPersonality: (() -> Void)?
     var onOpenMinds: (() -> Void)?
     var onOpenMemory: (() -> Void)?
+    var onOpenSetup: (() -> Void)?
 
     @State private var pulse = false
 
@@ -46,6 +47,14 @@ struct StatusIndicatorView: View {
             Spacer()
 
             HStack(spacing: InsightSpacing.xs) {
+                if let onOpenSetup {
+                    Button(action: onOpenSetup) {
+                        Image(systemName: "gearshape")
+                    }
+                    .buttonStyle(InsightIconButtonStyle())
+                    .accessibilityLabel("Setup")
+                }
+
                 if let onOpenPersonality {
                     Button(action: onOpenPersonality) {
                         Image(systemName: "theatermasks")

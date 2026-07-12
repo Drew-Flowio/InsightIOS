@@ -19,7 +19,8 @@ struct MainChatView: View {
                     personalityName: viewModel.activePersonalityName,
                     onOpenPersonality: { viewModel.showPersonalityScreen = true },
                     onOpenMinds: { viewModel.showMindsLibrary = true },
-                    onOpenMemory: { viewModel.showMemoryScreen = true }
+                    onOpenMemory: { viewModel.showMemoryScreen = true },
+                    onOpenSetup: { viewModel.showVisionSetupScreen = true }
                 )
 
                 ChatTranscriptView(
@@ -30,7 +31,11 @@ struct MainChatView: View {
                 )
 
                 if viewModel.hasPhotoAttachment {
-                    if viewModel.photoVisualObservations != nil || viewModel.photoVisionSource != .ocrOnly {
+                    PhotoAnalysisSourceBadge(source: viewModel.photoVisionSource)
+                        .padding(.horizontal, InsightSpacing.md)
+                        .padding(.bottom, InsightSpacing.xxs)
+
+                    if viewModel.photoVisualObservations != nil || viewModel.photoVisionSource == .ocrAndVlm {
                         PhotoObservationsView(
                             observations: viewModel.photoVisualObservations,
                             source: viewModel.photoVisionSource
@@ -122,6 +127,9 @@ struct MainChatView: View {
         }
         .sheet(isPresented: $viewModel.showPersonalityScreen) {
             PersonalityView(viewModel: viewModel)
+        }
+        .sheet(isPresented: $viewModel.showVisionSetupScreen) {
+            VisionSetupView(viewModel: viewModel)
         }
     }
 

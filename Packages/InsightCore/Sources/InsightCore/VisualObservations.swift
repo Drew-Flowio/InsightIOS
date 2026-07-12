@@ -11,6 +11,16 @@ public enum VisionAnalysisSource: String, Sendable, Equatable, Codable {
     case ocrAndVlm
     case vlmUnavailable
     case vlmFailed
+
+    /// Customer-facing label for photo analysis mode.
+    public var customerAnalysisLabel: String {
+        switch self {
+        case .ocrAndVlm:
+            "OCR + Visual Reasoning"
+        case .ocrOnly, .vlmUnavailable, .vlmFailed:
+            "OCR only"
+        }
+    }
 }
 
 /// Structured output from the on-device VLM prototype (SmolVLM-class).

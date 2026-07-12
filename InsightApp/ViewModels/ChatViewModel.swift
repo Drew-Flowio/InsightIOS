@@ -17,6 +17,14 @@ enum AppBootstrapState: Equatable {
     case failed(String)
 }
 
+enum VisionSetupState: Equatable {
+    case checking
+    case notInstalled
+    case downloading(Double?)
+    case ready
+    case failed(String)
+}
+
 @MainActor
 @Observable
 final class ChatViewModel {
@@ -39,7 +47,11 @@ final class ChatViewModel {
     var showMindsLibrary = false
     var showMemoryScreen = false
     var showPersonalityScreen = false
+    var showVisionSetupScreen = false
     var selectedPhotoItem: PhotosPickerItem?
+
+    private(set) var visionSetupState: VisionSetupState = .checking
+    private(set) var visionSetupErrorMessage: String?
 
     private(set) var minds: [MindLibraryItem] = []
     private(set) var mindsFeedbackMessage: String?
@@ -442,6 +454,59 @@ final class ChatViewModel {
         }
     }
 
+    func refreshVisionStatus() {
+        guard let configuration else {
+            visionSetupState = .notInstalled
+            return
+        }
+
+        if case .downloading = visionSetupState {
+            return
+        }
+
+        visionSetupState = InsightModelSetup.isVisionReady(for: configuration) ? .ready : .notInstalled
+        visionSetupErrorMessage = nil
+    }
+
+    func downloadVision() {
+        guard let configuration else { return }
+
+        Task {
+            visionSetupState = .downloading(nil)
+            visionSetupErrorMessage = nil
+            do {
+                try await InsightModelSetup.downloadVision(for: configuration) { [weak self] progress in
+                    Task { @MainActor in
+                        self?.visionSetupState = .downloading(progress.fractionCompleted)
+                    }
+                }
+                visionSetupState = .ready
+            } catch {
+                visionSetupState = .failed(error.localizedDescription)
+                visionSetupErrorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    func retryVisionDownload() {
+        downloadVision()
+    }
+
+    func removeVisionModels() {
+        guard let configuration else { return }
+
+        Task {
+            do {
+                try InsightModelSetup.removeVisionModels(for: configuration)
+                visionSetupState = .notInstalled
+                visionSetupErrorMessage = nil
+            } catch {
+                visionSetupState = .failed(error.localizedDescription)
+                visionSetupErrorMessage = error.localizedDescription
+            }
+        }
+    }
+
     private func message(for outcome: MindImportOutcome) -> String {
         switch outcome {
         case .imported(let title):
@@ -498,6 +563,7 @@ final class ChatViewModel {
                 photoThumbnailURL = URL(fileURLWithPath: context.imagePath)
             }
             bootstrapState = .ready
+            refreshVisionStatus()
         } catch {
             bootstrapState = .failed(error.localizedDescription)
         }

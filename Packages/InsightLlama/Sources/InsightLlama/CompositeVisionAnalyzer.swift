@@ -14,7 +14,8 @@ public struct SmolVlmVisionAnalyzer: Sendable {
     }
 
     public var isAvailable: Bool {
-        LlamaVisionSession.modelsAvailable(modelPath: modelPath, mmprojPath: mmprojPath)
+        ModelFileIntegrity.isValidModelFile(at: modelPath, expectedBytes: config.modelDiskBytes) &&
+            ModelFileIntegrity.isValidModelFile(at: mmprojPath, expectedBytes: config.mmprojDiskBytes)
     }
 
     public func generateObservations(imageURL: URL) async -> VisualObservations? {
@@ -36,21 +37,20 @@ public struct SmolVlmVisionAnalyzer: Sendable {
 
 public struct CompositeVisionAnalyzer: VisionServing {
     private let ocrAnalyzer = SystemVisionImageAnalyzer()
-    private let vlmAnalyzer: SmolVlmVisionAnalyzer?
+    private let vlmAnalyzer: SmolVlmVisionAnalyzer
 
     public init(modelPath: URL, mmprojPath: URL, config: VisionRuntimeConfig) {
-        let analyzer = SmolVlmVisionAnalyzer(
+        self.vlmAnalyzer = SmolVlmVisionAnalyzer(
             modelPath: modelPath,
             mmprojPath: mmprojPath,
             config: config
         )
-        self.vlmAnalyzer = analyzer.isAvailable ? analyzer : nil
     }
 
     public func analyzePhoto(at imageURL: URL) async throws -> PhotoAnalysisResult {
         let ocr = try await ocrAnalyzer.analyzePhoto(at: imageURL)
 
-        guard let vlmAnalyzer else {
+        guard vlmAnalyzer.isAvailable else {
             return PhotoAnalysisMerger.merge(
                 ocrAnalysis: ocr,
                 vlmObservations: nil,

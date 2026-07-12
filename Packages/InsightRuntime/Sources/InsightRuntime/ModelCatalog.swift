@@ -51,10 +51,16 @@ public enum ModelCatalog {
         public let visionMmprojFileName: String
         public let visionModelDownloadURL: URL
         public let visionMmprojDownloadURL: URL
+        public let visionModelDiskBytes: Int64
+        public let visionMmprojDiskBytes: Int64
         public let minimumDeviceRAMGB: Int
 
+        public var visionDownloadBytes: Int64 {
+            visionModelDiskBytes + visionMmprojDiskBytes
+        }
+
         public var totalDownloadBytes: Int64 {
-            llmDiskBytes + whisperDiskBytes + 250_000_000 + 250_000_000
+            llmDiskBytes + whisperDiskBytes + visionDownloadBytes
         }
     }
 
@@ -68,8 +74,11 @@ public enum ModelCatalog {
         static let referenceVoiceFileName = "insight_reference_voice.wav"
         static let visionModelFileName = "SmolVLM-500M-Instruct-Q8_0.gguf"
         static let visionMmprojFileName = "mmproj-SmolVLM-500M-Instruct-Q8_0.gguf"
-        static let visionModelDownloadURL = URL(string: "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct-gguf/resolve/main/SmolVLM-500M-Instruct-Q8_0.gguf")!
-        static let visionMmprojDownloadURL = URL(string: "https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct-gguf/resolve/main/mmproj-SmolVLM-500M-Instruct-Q8_0.gguf")!
+        static let visionModelDownloadURL = URL(string: "https://huggingface.co/ggml-org/SmolVLM-500M-Instruct-GGUF/resolve/main/SmolVLM-500M-Instruct-Q8_0.gguf")!
+        static let visionMmprojDownloadURL = URL(string: "https://huggingface.co/ggml-org/SmolVLM-500M-Instruct-GGUF/resolve/main/mmproj-SmolVLM-500M-Instruct-Q8_0.gguf")!
+        /// Hugging Face `X-Linked-Size` for ggml-org/SmolVLM-500M-Instruct-GGUF @ 72e9860.
+        static let visionModelDiskBytes: Int64 = 436_806_912
+        static let visionMmprojDiskBytes: Int64 = 108_783_360
     }
 
     private static let phi4Provenance = ModelProvenance(
@@ -115,6 +124,8 @@ public enum ModelCatalog {
         visionMmprojFileName: SharedRuntimeAssets.visionMmprojFileName,
         visionModelDownloadURL: SharedRuntimeAssets.visionModelDownloadURL,
         visionMmprojDownloadURL: SharedRuntimeAssets.visionMmprojDownloadURL,
+        visionModelDiskBytes: SharedRuntimeAssets.visionModelDiskBytes,
+        visionMmprojDiskBytes: SharedRuntimeAssets.visionMmprojDiskBytes,
         minimumDeviceRAMGB: 7
     )
 
@@ -143,6 +154,8 @@ public enum ModelCatalog {
         visionMmprojFileName: SharedRuntimeAssets.visionMmprojFileName,
         visionModelDownloadURL: SharedRuntimeAssets.visionModelDownloadURL,
         visionMmprojDownloadURL: SharedRuntimeAssets.visionMmprojDownloadURL,
+        visionModelDiskBytes: SharedRuntimeAssets.visionModelDiskBytes,
+        visionMmprojDiskBytes: SharedRuntimeAssets.visionMmprojDiskBytes,
         minimumDeviceRAMGB: 6
     )
 
@@ -167,6 +180,8 @@ public enum ModelCatalog {
         visionMmprojFileName: SharedRuntimeAssets.visionMmprojFileName,
         visionModelDownloadURL: SharedRuntimeAssets.visionModelDownloadURL,
         visionMmprojDownloadURL: SharedRuntimeAssets.visionMmprojDownloadURL,
+        visionModelDiskBytes: SharedRuntimeAssets.visionModelDiskBytes,
+        visionMmprojDiskBytes: SharedRuntimeAssets.visionMmprojDiskBytes,
         minimumDeviceRAMGB: 7
     )
 
@@ -195,6 +210,8 @@ public enum ModelCatalog {
         visionMmprojFileName: SharedRuntimeAssets.visionMmprojFileName,
         visionModelDownloadURL: SharedRuntimeAssets.visionModelDownloadURL,
         visionMmprojDownloadURL: SharedRuntimeAssets.visionMmprojDownloadURL,
+        visionModelDiskBytes: SharedRuntimeAssets.visionModelDiskBytes,
+        visionMmprojDiskBytes: SharedRuntimeAssets.visionMmprojDiskBytes,
         minimumDeviceRAMGB: 6
     )
 
@@ -221,6 +238,8 @@ public enum ModelCatalog {
         visionMmprojFileName: SharedRuntimeAssets.visionMmprojFileName,
         visionModelDownloadURL: SharedRuntimeAssets.visionModelDownloadURL,
         visionMmprojDownloadURL: SharedRuntimeAssets.visionMmprojDownloadURL,
+        visionModelDiskBytes: SharedRuntimeAssets.visionModelDiskBytes,
+        visionMmprojDiskBytes: SharedRuntimeAssets.visionMmprojDiskBytes,
         minimumDeviceRAMGB: 4
     )
 
@@ -285,6 +304,8 @@ public enum ModelCatalog {
         VisionRuntimeConfig(
             modelFileName: bundle.visionModelFileName,
             mmprojFileName: bundle.visionMmprojFileName,
+            modelDiskBytes: bundle.visionModelDiskBytes,
+            mmprojDiskBytes: bundle.visionMmprojDiskBytes,
             maxPredictTokens: 128,
             temperature: 0.1,
             gpuLayers: -1

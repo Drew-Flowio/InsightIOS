@@ -64,15 +64,15 @@ struct PhotoObservationsView: View {
     private var statusLine: some View {
         switch source {
         case .ocrAndVlm:
-            Text("Experimental SmolVLM prototype — may be incomplete or wrong.")
+            Text("Visual reasoning is experimental — observations may be incomplete or wrong.")
                 .font(InsightTypography.caption())
                 .foregroundStyle(InsightColors.textSecondary)
         case .vlmFailed:
-            Text("Visual model failed — showing OCR only.")
+            Text("Visual reasoning failed for this photo — showing OCR only.")
                 .font(InsightTypography.caption())
                 .foregroundStyle(InsightColors.textSecondary)
         case .vlmUnavailable:
-            Text("Visual model not installed — OCR only.")
+            Text("Enable Visual Reasoning in Setup to go beyond OCR.")
                 .font(InsightTypography.caption())
                 .foregroundStyle(InsightColors.textSecondary)
         case .ocrOnly:

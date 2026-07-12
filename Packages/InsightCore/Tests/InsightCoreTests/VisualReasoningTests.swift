@@ -103,4 +103,11 @@ final class PhotoObservationPromptTests: XCTestCase {
         XCTAssertTrue(block.contains("SmolVLM vision model is not available"))
         XCTAssertFalse(block.contains("Visual observations"))
     }
+
+    func testCustomerAnalysisLabels() {
+        XCTAssertEqual(VisionAnalysisSource.ocrOnly.customerAnalysisLabel, "OCR only")
+        XCTAssertEqual(VisionAnalysisSource.ocrAndVlm.customerAnalysisLabel, "OCR + Visual Reasoning")
+        XCTAssertEqual(VisionAnalysisSource.vlmUnavailable.customerAnalysisLabel, "OCR only")
+        XCTAssertEqual(VisionAnalysisSource.vlmFailed.customerAnalysisLabel, "OCR only")
+    }
 }

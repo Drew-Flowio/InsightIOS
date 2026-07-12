@@ -80,6 +80,16 @@ final class ModelCatalogTests: XCTestCase {
         XCTAssertFalse(ModelCatalog.customerSetupLabel.localizedCaseInsensitiveContains("llama"))
     }
 
+    func testVisionAssetsUsePublicGgmlOrgHosting() {
+        let bundle = ModelCatalog.primaryHighQuality
+
+        XCTAssertTrue(bundle.visionModelDownloadURL.absoluteString.contains("ggml-org/SmolVLM-500M-Instruct-GGUF"))
+        XCTAssertTrue(bundle.visionMmprojDownloadURL.absoluteString.contains("ggml-org/SmolVLM-500M-Instruct-GGUF"))
+        XCTAssertEqual(bundle.visionModelDiskBytes, 436_806_912)
+        XCTAssertEqual(bundle.visionMmprojDiskBytes, 108_783_360)
+        XCTAssertEqual(bundle.visionDownloadBytes, 545_590_272)
+    }
+
     func testProductionAndFallbackBundlesUseDistinctFilenames() {
         XCTAssertNotEqual(
             ModelCatalog.primaryHighQuality.llmFileName,

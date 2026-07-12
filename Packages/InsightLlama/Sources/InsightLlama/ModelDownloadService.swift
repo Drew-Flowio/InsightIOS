@@ -43,8 +43,8 @@ public struct ModelFileStore: Sendable {
     }
 
     public var isVisionReady: Bool {
-        FileManager.default.fileExists(atPath: visionModelURL.path) &&
-            FileManager.default.fileExists(atPath: visionMmprojURL.path)
+        ModelFileIntegrity.isValidModelFile(at: visionModelURL, expectedBytes: bundle.visionModelDiskBytes) &&
+            ModelFileIntegrity.isValidModelFile(at: visionMmprojURL, expectedBytes: bundle.visionMmprojDiskBytes)
     }
 
     public var isVoiceStackReady: Bool {
@@ -108,6 +108,67 @@ public enum ModelDownloadService {
             expectedBytes: bundle.whisperDiskBytes,
             onProgress: onProgress
         )
+    }
+
+    public static func downloadVision(
+        bundle: ModelCatalog.ModelBundle,
+        to modelsDirectory: URL,
+        onProgress: (@Sendable (ModelDownloadProgress) -> Void)? = nil
+    ) async throws {
+        let store = ModelFileStore(modelsDirectory: modelsDirectory, bundle: bundle)
+        try store.ensureModelsDirectory()
+
+        let totalBytes = bundle.visionDownloadBytes
+
+        _ = try await downloadFile(
+            from: bundle.visionModelDownloadURL,
+            to: store.visionModelURL,
+            expectedBytes: bundle.visionModelDiskBytes,
+            onProgress: { progress in
+                onProgress?(
+                    ModelDownloadProgress(
+                        bytesWritten: progress.bytesWritten,
+                        totalBytes: totalBytes
+                    )
+                )
+            }
+        )
+
+        let modelBytes = bundle.visionModelDiskBytes
+        _ = try await downloadFile(
+            from: bundle.visionMmprojDownloadURL,
+            to: store.visionMmprojURL,
+            expectedBytes: bundle.visionMmprojDiskBytes,
+            onProgress: { progress in
+                onProgress?(
+                    ModelDownloadProgress(
+                        bytesWritten: modelBytes + progress.bytesWritten,
+                        totalBytes: totalBytes
+                    )
+                )
+            }
+        )
+
+        guard store.isVisionReady else {
+            throw Error.downloadFailed("Vision model files did not pass validation after download.")
+        }
+    }
+
+    public static func removeVisionModels(
+        bundle: ModelCatalog.ModelBundle,
+        from modelsDirectory: URL
+    ) throws {
+        let store = ModelFileStore(modelsDirectory: modelsDirectory, bundle: bundle)
+        let targets = [
+            store.visionModelURL,
+            store.visionMmprojURL,
+            store.visionModelURL.appendingPathExtension("part"),
+            store.visionMmprojURL.appendingPathExtension("part"),
+        ]
+
+        for url in targets where FileManager.default.fileExists(atPath: url.path) {
+            try FileManager.default.removeItem(at: url)
+        }
     }
 
     private static func downloadFile(

@@ -107,6 +107,8 @@ public protocol TtsServing: Sendable {
 public struct VisionRuntimeConfig: Sendable, Equatable {
     public let modelFileName: String
     public let mmprojFileName: String
+    public let modelDiskBytes: Int64
+    public let mmprojDiskBytes: Int64
     public let maxPredictTokens: Int
     public let temperature: Double
     public let gpuLayers: Int
@@ -114,12 +116,16 @@ public struct VisionRuntimeConfig: Sendable, Equatable {
     public init(
         modelFileName: String,
         mmprojFileName: String,
+        modelDiskBytes: Int64,
+        mmprojDiskBytes: Int64,
         maxPredictTokens: Int = 128,
         temperature: Double = 0.1,
         gpuLayers: Int = -1
     ) {
         self.modelFileName = modelFileName
         self.mmprojFileName = mmprojFileName
+        self.modelDiskBytes = modelDiskBytes
+        self.mmprojDiskBytes = mmprojDiskBytes
         self.maxPredictTokens = maxPredictTokens
         self.temperature = temperature
         self.gpuLayers = gpuLayers

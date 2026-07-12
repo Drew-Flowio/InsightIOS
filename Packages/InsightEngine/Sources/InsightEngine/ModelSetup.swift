@@ -42,4 +42,26 @@ public enum InsightModelSetup {
     ) async throws {
         _ = try await downloadWhisper(for: configuration, onProgress: onProgress)
     }
+
+    public static func isVisionReady(for configuration: AppConfiguration) -> Bool {
+        configuration.modelStore.isVisionReady
+    }
+
+    public static func downloadVision(
+        for configuration: AppConfiguration,
+        onProgress: (@Sendable (ModelDownloadProgress) -> Void)? = nil
+    ) async throws {
+        try await ModelDownloadService.downloadVision(
+            bundle: configuration.modelBundle,
+            to: configuration.modelsDirectoryURL,
+            onProgress: onProgress
+        )
+    }
+
+    public static func removeVisionModels(for configuration: AppConfiguration) throws {
+        try ModelDownloadService.removeVisionModels(
+            bundle: configuration.modelBundle,
+            from: configuration.modelsDirectoryURL
+        )
+    }
 }
