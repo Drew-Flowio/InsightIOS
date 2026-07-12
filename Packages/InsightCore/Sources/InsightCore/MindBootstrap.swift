@@ -3,15 +3,11 @@ import InsightStorage
 
 public enum MindBootstrap {
     public static func seedBundledMindsIfNeeded(in repository: Repository) {
-        guard !repository.knowledgeVolumeExists(id: "mind.florida-coastal-demo") else {
-            return
+        for loader in BundledMinds.bundledMindLoaders() {
+            guard let volume = try? loader() else { continue }
+            guard !repository.knowledgeVolumeExists(id: volume.id) else { continue }
+            install(volume: volume, sourceLabel: "bundled.ogpack", enabled: true, in: repository)
         }
-
-        guard let volume = try? BundledMinds.floridaCoastalDemoVolume() else {
-            return
-        }
-
-        install(volume: volume, sourceLabel: "bundled.ogpack", enabled: true, in: repository)
     }
 
     public static func install(
@@ -23,6 +19,7 @@ public enum MindBootstrap {
         repository.installKnowledgeVolume(
             id: volume.id,
             title: volume.title,
+            version: volume.version,
             summary: volume.summary,
             tags: volume.tags,
             sourceLabel: sourceLabel,
@@ -36,6 +33,7 @@ public enum MindBootstrap {
             KnowledgeVolume(
                 id: volumeRecord.id,
                 title: volumeRecord.title,
+                version: volumeRecord.resolvedVersion,
                 summary: volumeRecord.summary,
                 tags: volumeRecord.tags,
                 records: records.map {

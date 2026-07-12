@@ -15,7 +15,8 @@ struct MainChatView: View {
             VStack(spacing: 0) {
                 StatusIndicatorView(
                     state: viewModel.appState,
-                    assistantName: viewModel.assistantName
+                    assistantName: viewModel.assistantName,
+                    onOpenMinds: { viewModel.showMindsLibrary = true }
                 )
 
                 ChatTranscriptView(
@@ -86,6 +87,9 @@ struct MainChatView: View {
         }
         .onAppear {
             viewModel.bootstrap()
+        }
+        .sheet(isPresented: $viewModel.showMindsLibrary) {
+            MindsLibraryView(viewModel: viewModel)
         }
     }
 

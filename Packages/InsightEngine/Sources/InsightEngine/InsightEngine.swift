@@ -288,6 +288,27 @@ public actor InsightEngine {
         repository.listEnabledKnowledgeVolumes()
     }
 
+    public func listMindLibraryItems() -> [MindLibraryItem] {
+        repository.listKnowledgeVolumes().map { volume in
+            MindLibraryItem(
+                id: volume.id,
+                title: volume.title,
+                version: volume.resolvedVersion,
+                summary: volume.summary ?? "",
+                isEnabled: volume.isEnabled,
+                recordCount: repository.countKnowledgeRecords(volumeID: volume.id)
+            )
+        }
+    }
+
+    public func setMindEnabled(mindID: String, enabled: Bool) {
+        repository.setKnowledgeVolumeEnabled(id: mindID, enabled: enabled)
+    }
+
+    public func importMind(from data: Data) -> MindImportOutcome {
+        MindImporter.importOGPack(data: data, into: repository)
+    }
+
     public func resetMemory(scope: ResetScope = .session) async {
         sessionManager.reset(clearMemoryFacts: scope == .all)
         visualContext = nil

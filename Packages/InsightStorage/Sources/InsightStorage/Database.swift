@@ -43,6 +43,7 @@ enum Database {
     CREATE TABLE IF NOT EXISTS knowledge_volumes (
         id              TEXT PRIMARY KEY,
         title           TEXT NOT NULL,
+        version         TEXT,
         summary         TEXT,
         tags_json       TEXT NOT NULL DEFAULT '[]',
         source_label    TEXT,
@@ -91,6 +92,8 @@ enum Database {
             throw StorageError.openFailed(message: lastError(from: connection))
         }
 
+        migrate(connection)
+
         return connection
     }
 
@@ -112,7 +115,13 @@ enum Database {
             throw StorageError.openFailed(message: lastError(from: connection))
         }
 
+        migrate(connection)
+
         return connection
+    }
+
+    private static func migrate(_ connection: OpaquePointer) {
+        _ = sqlite3_exec(connection, "ALTER TABLE knowledge_volumes ADD COLUMN version TEXT", nil, nil, nil)
     }
 
     static func lastError(from connection: OpaquePointer?) -> String {

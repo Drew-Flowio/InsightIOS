@@ -3,6 +3,10 @@ import Foundation
 public enum BundledMinds {
     public static let floridaCoastalDemoResource = "florida-coastal-demo"
 
+    public static func bundledMindLoaders() -> [() throws -> KnowledgeVolume] {
+        [{ try floridaCoastalDemoVolume() }]
+    }
+
     public static func floridaCoastalDemoData() throws -> Data {
         guard
             let url = Bundle.module.url(forResource: floridaCoastalDemoResource, withExtension: "ogpack"),

@@ -4,6 +4,7 @@ import InsightCore
 struct StatusIndicatorView: View {
     let state: AppState
     let assistantName: String
+    var onOpenMinds: (() -> Void)?
 
     @State private var pulse = false
 
@@ -30,6 +31,14 @@ struct StatusIndicatorView: View {
             }
 
             Spacer()
+
+            if let onOpenMinds {
+                Button(action: onOpenMinds) {
+                    Image(systemName: "books.vertical")
+                }
+                .buttonStyle(InsightIconButtonStyle())
+                .accessibilityLabel("Minds")
+            }
         }
         .padding(.horizontal, InsightSpacing.lg)
         .padding(.vertical, InsightSpacing.sm)

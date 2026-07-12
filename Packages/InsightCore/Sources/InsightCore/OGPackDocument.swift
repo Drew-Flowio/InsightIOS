@@ -16,6 +16,7 @@ public struct OGPackDocument: Sendable, Equatable, Codable {
         KnowledgeVolume(
             id: volume.id,
             title: volume.title,
+            version: volume.resolvedVersion,
             summary: volume.summary,
             tags: volume.tags,
             records: records.map {
@@ -28,14 +29,29 @@ public struct OGPackDocument: Sendable, Equatable, Codable {
 public struct OGPackVolume: Sendable, Equatable, Codable {
     public let id: String
     public let title: String
+    public let version: String?
     public let summary: String?
     public let tags: [String]
 
-    public init(id: String, title: String, summary: String? = nil, tags: [String] = []) {
+    public init(
+        id: String,
+        title: String,
+        version: String? = nil,
+        summary: String? = nil,
+        tags: [String] = []
+    ) {
         self.id = id
         self.title = title
+        self.version = version
         self.summary = summary
         self.tags = tags
+    }
+
+    var resolvedVersion: String {
+        guard let version = version?.trimmingCharacters(in: .whitespacesAndNewlines), !version.isEmpty else {
+            return "1.0"
+        }
+        return version
     }
 }
 

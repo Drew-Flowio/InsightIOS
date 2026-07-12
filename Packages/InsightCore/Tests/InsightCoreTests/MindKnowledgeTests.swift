@@ -7,6 +7,7 @@ final class MindKnowledgeTests: XCTestCase {
 
         XCTAssertEqual(volume.id, "mind.florida-coastal-demo")
         XCTAssertEqual(volume.title, "Florida Coastal")
+        XCTAssertEqual(volume.version, "1.0")
         XCTAssertTrue(volume.records.contains { $0.id == "outboard.telltale.weak-stream" })
     }
 

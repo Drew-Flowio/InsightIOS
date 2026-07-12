@@ -81,15 +81,24 @@ public struct MemoryFactRecord: Sendable, Equatable, Identifiable {
 public struct KnowledgeVolumeRecord: Sendable, Equatable, Identifiable {
     public let id: String
     public let title: String
+    public let version: String?
     public let summary: String?
     public let tags: [String]
     public let sourceLabel: String?
     public let isEnabled: Bool
     public let installedAt: String
 
+    public var resolvedVersion: String {
+        guard let version = version?.trimmingCharacters(in: .whitespacesAndNewlines), !version.isEmpty else {
+            return "1.0"
+        }
+        return version
+    }
+
     public init(
         id: String,
         title: String,
+        version: String?,
         summary: String?,
         tags: [String],
         sourceLabel: String?,
@@ -98,6 +107,7 @@ public struct KnowledgeVolumeRecord: Sendable, Equatable, Identifiable {
     ) {
         self.id = id
         self.title = title
+        self.version = version
         self.summary = summary
         self.tags = tags
         self.sourceLabel = sourceLabel

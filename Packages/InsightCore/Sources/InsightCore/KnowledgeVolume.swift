@@ -4,6 +4,7 @@ import Foundation
 public struct KnowledgeVolume: Sendable, Equatable, Identifiable, Codable {
     public let id: String
     public let title: String
+    public let version: String
     public let summary: String?
     public let tags: [String]
     public let records: [KnowledgeRecord]
@@ -11,12 +12,14 @@ public struct KnowledgeVolume: Sendable, Equatable, Identifiable, Codable {
     public init(
         id: String,
         title: String,
+        version: String = "1.0",
         summary: String? = nil,
         tags: [String] = [],
         records: [KnowledgeRecord]
     ) {
         self.id = id
         self.title = title
+        self.version = version
         self.summary = summary
         self.tags = tags
         self.records = records

@@ -31,6 +31,7 @@
 		A10000000000000000000015 /* InsightEngine in Frameworks */ = {isa = PBXBuildFile; productRef = A50000000000000000000001 /* InsightEngine */; };
 		A10000000000000000000016 /* ModelSetupOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000016 /* ModelSetupOverlay.swift */; };
 		A10000000000000000000017 /* KnowledgeSourcesSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000017 /* KnowledgeSourcesSection.swift */; };
+		A10000000000000000000018 /* MindsLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000018 /* MindsLibraryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -58,6 +59,7 @@
 		A20000000000000000000015 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20000000000000000000016 /* ModelSetupOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelSetupOverlay.swift; sourceTree = "<group>"; };
 		A20000000000000000000017 /* KnowledgeSourcesSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeSourcesSection.swift; sourceTree = "<group>"; };
+		A20000000000000000000018 /* MindsLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindsLibraryView.swift; sourceTree = "<group>"; };
 		A30000000000000000000001 /* InsightIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InsightIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -153,6 +155,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000002 /* MainChatView.swift */,
+				A20000000000000000000018 /* MindsLibraryView.swift */,
 				A6000000000000000000000A /* Components */,
 			);
 			path = Views;
@@ -273,6 +276,7 @@
 				A10000000000000000000013 /* CameraPickerView.swift in Sources */,
 				A10000000000000000000016 /* ModelSetupOverlay.swift in Sources */,
 				A10000000000000000000017 /* KnowledgeSourcesSection.swift in Sources */,
+				A10000000000000000000018 /* MindsLibraryView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -32,7 +32,11 @@ final class ChatViewModel {
     var composerText = ""
     var showCamera = false
     var showPhotoPicker = false
+    var showMindsLibrary = false
     var selectedPhotoItem: PhotosPickerItem?
+
+    private(set) var minds: [MindLibraryItem] = []
+    private(set) var mindsFeedbackMessage: String?
 
     let assistantName: String
 
@@ -220,6 +224,57 @@ final class ChatViewModel {
 
     func clearError() {
         errorMessage = nil
+    }
+
+    func loadMinds() async {
+        guard let engine else { return }
+        minds = await engine.listMindLibraryItems()
+    }
+
+    func setMindEnabled(id: String, enabled: Bool) {
+        guard let engine else { return }
+
+        Task {
+            await engine.setMindEnabled(mindID: id, enabled: enabled)
+            await loadMinds()
+        }
+    }
+
+    func importMind(from url: URL) {
+        guard let engine else { return }
+
+        Task {
+            let accessed = url.startAccessingSecurityScopedResource()
+            defer {
+                if accessed {
+                    url.stopAccessingSecurityScopedResource()
+                }
+            }
+
+            do {
+                let data = try Data(contentsOf: url)
+                let outcome = await engine.importMind(from: data)
+                mindsFeedbackMessage = message(for: outcome)
+                await loadMinds()
+            } catch {
+                mindsFeedbackMessage = "Could not read this Mind file."
+            }
+        }
+    }
+
+    func clearMindsFeedback() {
+        mindsFeedbackMessage = nil
+    }
+
+    private func message(for outcome: MindImportOutcome) -> String {
+        switch outcome {
+        case .imported(let title):
+            "Imported “\(title)”."
+        case .duplicate(let title):
+            "“\(title)” is already installed."
+        case .failed(let message):
+            message
+        }
     }
 
     // MARK: - Private

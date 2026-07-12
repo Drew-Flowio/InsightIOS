@@ -245,6 +245,7 @@ public final class Repository: @unchecked Sendable {
     public func installKnowledgeVolume(
         id: String,
         title: String,
+        version: String,
         summary: String?,
         tags: [String],
         sourceLabel: String?,
@@ -254,6 +255,7 @@ public final class Repository: @unchecked Sendable {
         let volume = KnowledgeVolumeRecord(
             id: id,
             title: title,
+            version: version,
             summary: summary,
             tags: tags,
             sourceLabel: sourceLabel,
@@ -266,12 +268,13 @@ public final class Repository: @unchecked Sendable {
 
         execute(
             """
-            INSERT INTO knowledge_volumes (id, title, summary, tags_json, source_label, is_enabled, installed_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO knowledge_volumes (id, title, version, summary, tags_json, source_label, is_enabled, installed_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             bindings: [
                 .text(volume.id),
                 .text(volume.title),
+                .text(version),
                 volume.summary.map(SQLValue.text) ?? .null,
                 .text(Self.encodeJSON(tags)),
                 sourceLabel.map(SQLValue.text) ?? .null,
@@ -302,7 +305,7 @@ public final class Repository: @unchecked Sendable {
     public func listKnowledgeVolumes() -> [KnowledgeVolumeRecord] {
         queryMany(
             """
-            SELECT id, title, summary, tags_json, source_label, is_enabled, installed_at
+            SELECT id, title, version, summary, tags_json, source_label, is_enabled, installed_at
             FROM knowledge_volumes ORDER BY installed_at ASC
             """,
             map: Self.mapKnowledgeVolume
@@ -312,7 +315,7 @@ public final class Repository: @unchecked Sendable {
     public func listEnabledKnowledgeVolumes() -> [KnowledgeVolumeRecord] {
         queryMany(
             """
-            SELECT id, title, summary, tags_json, source_label, is_enabled, installed_at
+            SELECT id, title, version, summary, tags_json, source_label, is_enabled, installed_at
             FROM knowledge_volumes WHERE is_enabled = 1 ORDER BY installed_at ASC
             """,
             map: Self.mapKnowledgeVolume
@@ -335,6 +338,14 @@ public final class Repository: @unchecked Sendable {
             bindings: [.text(volumeID)],
             map: Self.mapKnowledgeRecord
         )
+    }
+
+    public func countKnowledgeRecords(volumeID: String) -> Int {
+        queryOne(
+            "SELECT COUNT(*) FROM knowledge_records WHERE volume_id = ?",
+            bindings: [.text(volumeID)],
+            map: { Int(sqlite3_column_int($0, 0)) }
+        ) ?? 0
     }
 
     public func enabledKnowledgeVolumesWithRecords() -> [(KnowledgeVolumeRecord, [StoredKnowledgeRecord])] {
@@ -519,11 +530,12 @@ public final class Repository: @unchecked Sendable {
         KnowledgeVolumeRecord(
             id: columnText(statement, 0),
             title: columnText(statement, 1),
-            summary: columnOptionalText(statement, 2),
-            tags: decodeJSON(columnText(statement, 3), as: [String].self) ?? [],
-            sourceLabel: columnOptionalText(statement, 4),
-            isEnabled: sqlite3_column_int(statement, 5) != 0,
-            installedAt: columnText(statement, 6)
+            version: columnOptionalText(statement, 2),
+            summary: columnOptionalText(statement, 3),
+            tags: decodeJSON(columnText(statement, 4), as: [String].self) ?? [],
+            sourceLabel: columnOptionalText(statement, 5),
+            isEnabled: sqlite3_column_int(statement, 6) != 0,
+            installedAt: columnText(statement, 7)
         )
     }
 

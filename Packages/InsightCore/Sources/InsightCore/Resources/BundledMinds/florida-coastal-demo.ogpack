@@ -3,6 +3,7 @@
   "volume": {
     "id": "mind.florida-coastal-demo",
     "title": "Florida Coastal",
+    "version": "1.0",
     "summary": "Coastal boating and outboard troubleshooting reference for Florida waters.",
     "tags": ["coastal", "boating", "florida", "outboard", "marine"]
   },
