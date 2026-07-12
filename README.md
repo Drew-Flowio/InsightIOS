@@ -1,8 +1,13 @@
 # InsightIOS
 
-Offline-first iPhone assistant built in SwiftUI. On-device LLM (llama.cpp), whisper.cpp speech-to-text, and local voice synthesis on macOS (Coqui XTTS).
+Offline-first iPhone assistant built in SwiftUI. On-device LLM (llama.cpp), whisper.cpp speech-to-text, local Expert Packs (Minds), and a photo-question workflow. Local voice synthesis on macOS (Coqui XTTS).
 
 This repo is **standalone** — it is not part of Task Torch.
+
+## Product docs
+
+- **[Vision layer requirement](./docs/VISION_LAYER.md)** — true visual reasoning is core product; v1.6 OCR bridge vs future VLM path; target pipeline; evaluation milestone
+- **[Backlog](./docs/BACKLOG.md)** — near-term roadmap (vision eval, Mind polish, out-of-scope)
 
 ## Open in Xcode
 
@@ -39,6 +44,7 @@ On iPhone, spoken replies use Apple’s system voice. Full XTTS quality is avail
 InsightIOS/
 ├── InsightIOS.xcodeproj
 ├── InsightApp/          SwiftUI shell
+├── docs/                Architecture and backlog (vision layer, roadmap)
 ├── Packages/            Swift packages (Engine, Llama, Whisper, Voice, …)
 ├── tools/xtts/          Coqui XTTS setup script
 └── setup_xtts.sh        Shortcut to tools/xtts/setup_mac.sh
