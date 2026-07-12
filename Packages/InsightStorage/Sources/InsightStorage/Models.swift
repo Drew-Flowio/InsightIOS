@@ -21,6 +21,8 @@ public struct MessageRecord: Sendable, Equatable, Identifiable {
     public let role: String
     public let content: String
     public let source: String
+    public let imagePath: String?
+    public let ocrText: String?
     public let promptVersionID: String?
     public let latencyMs: Int?
     public let cancelled: Bool
@@ -32,6 +34,8 @@ public struct MessageRecord: Sendable, Equatable, Identifiable {
         role: String,
         content: String,
         source: String,
+        imagePath: String? = nil,
+        ocrText: String? = nil,
         promptVersionID: String?,
         latencyMs: Int?,
         cancelled: Bool
@@ -42,6 +46,8 @@ public struct MessageRecord: Sendable, Equatable, Identifiable {
         self.role = role
         self.content = content
         self.source = source
+        self.imagePath = imagePath
+        self.ocrText = ocrText
         self.promptVersionID = promptVersionID
         self.latencyMs = latencyMs
         self.cancelled = cancelled

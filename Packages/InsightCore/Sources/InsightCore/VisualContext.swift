@@ -1,19 +1,35 @@
 import Foundation
 
-/// Active photo context for the current conversation.
+/// Active photo attachment for the current conversation turn(s).
 public struct VisualContext: Sendable, Equatable {
-    public let imagePath: String
-    public let caption: String
+    public let analysis: PhotoAnalysisResult
+    public var editedOcrText: String?
 
-    public init(imagePath: String, caption: String) {
-        self.imagePath = imagePath
-        self.caption = caption
+    public init(analysis: PhotoAnalysisResult, editedOcrText: String? = nil) {
+        self.analysis = analysis
+        self.editedOcrText = editedOcrText
+    }
+
+    public var imagePath: String { analysis.imagePath }
+
+    /// Backward-compatible summary for UI chips.
+    public var caption: String {
+        let ocr = analysis.resolvedOcrText(edited: editedOcrText)
+        if !ocr.isEmpty {
+            let firstLine = ocr.split(separator: "\n", maxSplits: 1).first.map(String.init) ?? ocr
+            return firstLine.count > 120 ? String(firstLine.prefix(117)) + "…" : firstLine
+        }
+        if !analysis.detectedLabels.isEmpty {
+            return analysis.detectedLabels.prefix(3).joined(separator: ", ")
+        }
+        return "Photo attached (\(analysis.width)×\(analysis.height))"
     }
 
     public func promptBlock() -> String {
-        """
-        Factual image description for the currently attached photo. Use this as evidence only; do not invent details beyond it.
-        \(caption)
-        """
+        analysis.promptBlock(editedOcr: editedOcrText)
+    }
+
+    public func withEditedOcr(_ text: String?) -> VisualContext {
+        VisualContext(analysis: analysis, editedOcrText: text)
     }
 }

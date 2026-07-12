@@ -127,6 +127,7 @@ public struct VisionRuntimeConfig: Sendable, Equatable {
 }
 
 public protocol VisionServing: Sendable {
+    func analyzePhoto(at imageURL: URL) async throws -> PhotoAnalysisResult
     func describeImage(at imageURL: URL) async throws -> String
 }
 

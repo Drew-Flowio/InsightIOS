@@ -122,6 +122,8 @@ enum Database {
 
     private static func migrate(_ connection: OpaquePointer) {
         _ = sqlite3_exec(connection, "ALTER TABLE knowledge_volumes ADD COLUMN version TEXT", nil, nil, nil)
+        _ = sqlite3_exec(connection, "ALTER TABLE messages ADD COLUMN image_path TEXT", nil, nil, nil)
+        _ = sqlite3_exec(connection, "ALTER TABLE messages ADD COLUMN ocr_text TEXT", nil, nil, nil)
     }
 
     static func lastError(from connection: OpaquePointer?) -> String {

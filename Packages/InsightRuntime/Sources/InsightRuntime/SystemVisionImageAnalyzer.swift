@@ -1,21 +1,33 @@
 import CoreGraphics
 import Foundation
 import ImageIO
+import InsightCore
 import Vision
 
 public struct SystemVisionImageAnalyzer: VisionServing {
     public init() {}
 
-    public func describeImage(at imageURL: URL) async throws -> String {
+    public func analyzePhoto(at imageURL: URL) async throws -> PhotoAnalysisResult {
         try await Task.detached(priority: .userInitiated) {
-            try Self.analyzeImage(at: imageURL)
+            try Self.analyzePhoto(at: imageURL)
         }.value
     }
 
-    private static func analyzeImage(at imageURL: URL) throws -> String {
+    public func describeImage(at imageURL: URL) async throws -> String {
+        let analysis = try await analyzePhoto(at: imageURL)
+        return analysis.promptBlock(editedOcr: nil)
+    }
+
+    private static func analyzePhoto(at imageURL: URL) throws -> PhotoAnalysisResult {
         guard let source = CGImageSourceCreateWithURL(imageURL as CFURL, nil),
               let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
-            return "Unable to analyze this image because it could not be loaded."
+            return PhotoAnalysisResult(
+                imagePath: imageURL.path,
+                width: 0,
+                height: 0,
+                ocrText: "",
+                detectedLabels: []
+            )
         }
 
         let classifyRequest = VNClassifyImageRequest()
@@ -29,10 +41,10 @@ public struct SystemVisionImageAnalyzer: VisionServing {
         let handler = VNImageRequestHandler(cgImage: image, options: [:])
         try handler.perform([classifyRequest, textRequest, faceRequest, barcodeRequest])
 
-        let classifications = (classifyRequest.results ?? [])
+        let labels = (classifyRequest.results ?? [])
             .filter { $0.confidence >= 0.10 }
             .prefix(8)
-            .map { VisionLabel(name: cleanIdentifier($0.identifier), confidence: Double($0.confidence)) }
+            .map { cleanIdentifier($0.identifier) }
 
         let textLines = (textRequest.results ?? [])
             .compactMap { observation -> String? in
@@ -42,72 +54,15 @@ public struct SystemVisionImageAnalyzer: VisionServing {
             }
             .filter { !$0.isEmpty }
 
-        let faceCount = faceRequest.results?.count ?? 0
-        let barcodeCount = barcodeRequest.results?.count ?? 0
-        let confidence = imageConfidence(classifications: Array(classifications), textLines: textLines)
-
-        return buildDescription(
+        return PhotoAnalysisResult(
+            imagePath: imageURL.path,
             width: image.width,
             height: image.height,
-            classifications: Array(classifications),
-            textLines: Array(textLines.prefix(12)),
-            faceCount: faceCount,
-            barcodeCount: barcodeCount,
-            confidence: confidence
+            ocrText: textLines.prefix(24).joined(separator: "\n"),
+            detectedLabels: Array(labels),
+            faceCount: faceRequest.results?.count ?? 0,
+            barcodeCount: barcodeRequest.results?.count ?? 0
         )
-    }
-
-    private static func buildDescription(
-        width: Int,
-        height: Int,
-        classifications: [VisionLabel],
-        textLines: [String],
-        faceCount: Int,
-        barcodeCount: Int,
-        confidence: String
-    ) -> String {
-        var lines: [String] = []
-        lines.append("Factual image description generated before answering.")
-        lines.append("Image size: \(width)x\(height) pixels.")
-
-        if classifications.isEmpty {
-            lines.append("Main visible objects: Vision did not produce confident object/category labels.")
-        } else {
-            let labels = classifications
-                .map { "\($0.name) (\(Int($0.confidence * 100))%)" }
-                .joined(separator: ", ")
-            lines.append("Main visible objects/categories detected: \(labels). Treat these as machine-vision clues, not guaranteed facts.")
-        }
-
-        if textLines.isEmpty {
-            lines.append("Text visible in the image: No readable text detected.")
-        } else {
-            lines.append("Text visible in the image: \(textLines.joined(separator: " | ")).")
-        }
-
-        var environmentDetails: [String] = []
-        if faceCount > 0 {
-            environmentDetails.append("\(faceCount) face region(s) detected")
-        }
-        if barcodeCount > 0 {
-            environmentDetails.append("\(barcodeCount) barcode region(s) detected")
-        }
-        lines.append("Environment/context: \(environmentDetails.isEmpty ? "No specific environment was confidently determined." : environmentDetails.joined(separator: ", ")).")
-        lines.append("Condition/state of objects: Not reliably determined unless stated by detected labels or readable text above.")
-        lines.append("Uncertainty: \(confidence). Do not infer hidden damage, model numbers, safety status, ingredients, wiring, or causes from this image alone.")
-        lines.append("Things that cannot be determined: unseen sides, internal condition, exact materials, measurements, live electrical state, gas/chemical exposure, freshness, identity, and whether a device is safe to use.")
-        return lines.joined(separator: "\n")
-    }
-
-    private static func imageConfidence(classifications: [VisionLabel], textLines: [String]) -> String {
-        let best = classifications.first?.confidence ?? 0
-        if best >= 0.55 || !textLines.isEmpty {
-            return "Medium confidence. Use detected text and high-confidence labels, but ask for another angle for precise diagnosis."
-        }
-        if best >= 0.25 {
-            return "Low-to-medium confidence. The image gives weak category clues but not enough for a firm diagnosis."
-        }
-        return "Low confidence. Ask for a clearer, closer photo before making image-specific claims."
     }
 
     private static func cleanIdentifier(_ identifier: String) -> String {
@@ -115,9 +70,4 @@ public struct SystemVisionImageAnalyzer: VisionServing {
             .replacingOccurrences(of: "_", with: " ")
             .replacingOccurrences(of: ",", with: " / ")
     }
-}
-
-private struct VisionLabel {
-    let name: String
-    let confidence: Double
 }

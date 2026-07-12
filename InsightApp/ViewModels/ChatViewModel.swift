@@ -30,6 +30,8 @@ final class ChatViewModel {
     private(set) var modelBundle: ModelCatalog.ModelBundle?
 
     var composerText = ""
+    var photoOcrText = ""
+    private(set) var photoThumbnailURL: URL?
     var showCamera = false
     var showPhotoPicker = false
     var showMindsLibrary = false
@@ -56,7 +58,12 @@ final class ChatViewModel {
     }
 
     var canSend: Bool {
-        !composerText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isBusy && isEngineReady
+        let hasQuestion = !composerText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        return hasQuestion && !isBusy && isEngineReady
+    }
+
+    var hasPhotoAttachment: Bool {
+        photoThumbnailURL != nil
     }
 
     init(assistantName: String = "Insight", previewMessages: [ChatDisplayMessage]? = nil) {
@@ -118,7 +125,19 @@ final class ChatViewModel {
             appendUserMessage(text)
             haptic(.light)
             activeTask = Task {
+                if hasPhotoAttachment {
+                    await engine.setPhotoOcrText(photoOcrText)
+                }
                 await performVoiceReplyTurn(engine: engine, text: text)
+            }
+            return
+        }
+
+        if hasPhotoAttachment {
+            appendUserMessage(text)
+            haptic(.light)
+            activeTask = Task {
+                await performPhotoQuestionTurn(engine: engine, text: text)
             }
             return
         }
@@ -221,27 +240,8 @@ final class ChatViewModel {
                     Task { @MainActor in self?.appState = state }
                 }
                 photoContextCaption = context.caption
-
-                appendPhotoMessage(caption: context.caption, imageURL: URL(fileURLWithPath: context.imagePath))
-                await engine.recordPhotoMessage(caption: context.caption)
-
-                let greetingID = UUID().uuidString
-                messages.append(ChatDisplayMessage(id: greetingID, role: .assistant, content: "", isStreaming: true))
-                streamingMessageID = greetingID
-
-                _ = try await engine.greetAfterPhoto(
-                    onToken: { [weak self] token in
-                        Task { @MainActor in
-                            self?.appendStreamingToken(id: greetingID, token: token)
-                        }
-                    },
-                    onState: { [weak self] state in
-                        Task { @MainActor in self?.appState = state }
-                    }
-                )
-
-                finalizeStreamingMessage(id: greetingID)
-                await reloadHistory(from: engine)
+                photoOcrText = context.analysis.ocrText
+                photoThumbnailURL = URL(fileURLWithPath: context.imagePath)
                 haptic(.success)
             } catch {
                 errorMessage = error.localizedDescription
@@ -269,6 +269,8 @@ final class ChatViewModel {
         Task {
             await engine.clearVisualContext()
             photoContextCaption = nil
+            photoOcrText = ""
+            photoThumbnailURL = nil
         }
     }
 
@@ -389,11 +391,44 @@ final class ChatViewModel {
             await reloadHistory(from: engine)
             if let context = await engine.getVisualContext() {
                 photoContextCaption = context.caption
+                photoOcrText = context.analysis.resolvedOcrText(edited: context.editedOcrText)
+                photoThumbnailURL = URL(fileURLWithPath: context.imagePath)
             }
             bootstrapState = .ready
         } catch {
             bootstrapState = .failed(error.localizedDescription)
         }
+    }
+
+    private func performPhotoQuestionTurn(engine: InsightEngine, text: String) async {
+        await engine.setPhotoOcrText(photoOcrText)
+
+        let streamID = UUID().uuidString
+        messages.append(ChatDisplayMessage(id: streamID, role: .assistant, content: "", isStreaming: true))
+        streamingMessageID = streamID
+
+        do {
+            _ = try await engine.sendTextMessage(
+                text,
+                onToken: { [weak self] token in
+                    Task { @MainActor in
+                        self?.appendStreamingToken(id: streamID, token: token)
+                    }
+                },
+                onState: { [weak self] state in
+                    Task { @MainActor in self?.appState = state }
+                }
+            )
+            finalizeStreamingMessage(id: streamID)
+            await reloadHistory(from: engine)
+            haptic(.soft)
+        } catch {
+            errorMessage = error.localizedDescription
+            messages.removeAll { $0.id == streamID }
+            streamingMessageID = nil
+            appState = .idle
+        }
+        activeTask = nil
     }
 
     private func performTextTurn(engine: InsightEngine, text: String) async {
@@ -498,6 +533,15 @@ final class ChatViewModel {
     ) -> ChatDisplayMessage? {
         switch record.role {
         case "user":
+            if record.source == "photo", let imagePath = record.imagePath {
+                return ChatDisplayMessage(
+                    id: record.id,
+                    role: .photo,
+                    content: record.content,
+                    timestamp: parseTimestamp(record.timestamp),
+                    imageURL: URL(fileURLWithPath: imagePath)
+                )
+            }
             if record.content.hasPrefix("📷 Photo attached") {
                 let caption = record.content
                     .replacingOccurrences(of: "📷 Photo attached\n", with: "")

@@ -79,9 +79,10 @@ public actor InsightEngine {
         onToken: (@Sendable (String) -> Void)? = nil,
         onState: (@Sendable (AppState) -> Void)? = nil
     ) async throws -> TurnResult {
+        let source = visualContext == nil ? "text" : "photo"
         let result = try await runTurn(
             utterance: text,
-            source: "text",
+            source: source,
             transcript: nil,
             recordUser: true,
             onToken: onToken,
@@ -158,9 +159,10 @@ public actor InsightEngine {
         onToken: (@Sendable (String) -> Void)? = nil,
         onState: (@Sendable (AppState) -> Void)? = nil
     ) async throws -> TurnResult {
+        let source = visualContext == nil ? "voice" : "photo"
         let result = try await runTurn(
             utterance: text,
-            source: "voice",
+            source: source,
             transcript: text,
             recordUser: true,
             onToken: onToken,
@@ -210,6 +212,11 @@ public actor InsightEngine {
         visualContext = nil
     }
 
+    public func setPhotoOcrText(_ text: String) {
+        guard let context = visualContext else { return }
+        visualContext = context.withEditedOcr(text)
+    }
+
     public func attachPhoto(
         sourceURL: URL,
         onState: (@Sendable (AppState) -> Void)? = nil
@@ -227,13 +234,6 @@ public actor InsightEngine {
 
         await setState(.idle, notify: onState)
         return context
-    }
-
-    public func recordPhotoMessage(caption: String) async {
-        _ = sessionManager.recordUserMessage(
-            text: "📷 Photo attached\n\(caption)",
-            source: "photo"
-        )
     }
 
     // MARK: - Cancellation
@@ -386,7 +386,7 @@ public actor InsightEngine {
         let (messages, debugText) = promptBuilder.buildAgentPrompt(
             AgentPromptInput(
                 userQuestion: utterance,
-                imageDescription: visualContext?.caption,
+                imageDescription: visualContext?.promptBlock(),
                 relevantMemory: relevantMemory,
                 retrievedKnowledge: retrievedKnowledge,
                 recentConversation: recentConversation,
@@ -399,14 +399,22 @@ public actor InsightEngine {
         logAgentDebug(
             turnID: turnID,
             userQuestion: utterance,
-            imageDescription: visualContext?.caption,
+            imageDescription: visualContext?.promptBlock(),
             relevantMemory: relevantMemory,
             retrievedKnowledge: retrievedKnowledge,
             promptLength: debugText.count
         )
 
         if recordUser {
-            _ = sessionManager.recordUserMessage(text: utterance, source: source)
+            if let context = visualContext, source == "photo" {
+                _ = sessionManager.recordPhotoQuestion(
+                    question: utterance,
+                    imagePath: context.imagePath,
+                    ocrText: context.analysis.resolvedOcrText(edited: context.editedOcrText)
+                )
+            } else {
+                _ = sessionManager.recordUserMessage(text: utterance, source: source)
+            }
             InsightEngineLog.info("Turn \(turnID) user message persisted.")
         }
 
@@ -450,7 +458,7 @@ public actor InsightEngine {
         let cancelled = token.isCancelled
         let validation = promptBuilder.validateAgentResponse(
             rawReplyText,
-            imageDescription: visualContext?.caption,
+            imageDescription: visualContext?.promptBlock(),
             userQuestion: utterance
         )
         if let reason = validation.reason {
@@ -475,7 +483,7 @@ public actor InsightEngine {
             latencyMs: latencyMs,
             promptVersionID: activePrompt?.id,
             assembledPromptDebug: debugText,
-            imageCaption: visualContext?.caption,
+            imageCaption: visualContext?.promptBlock(),
             knowledgeSources: retrievedKnowledge.hits
         )
         InsightEngineLog.info("Turn \(turnID) result built; returning to caller.")
@@ -483,14 +491,23 @@ public actor InsightEngine {
     }
 
     private func analyzeImage(at imageURL: URL, using vision: any VisionServing) async throws -> VisualContext {
-        let description = try await vision.describeImage(at: imageURL)
-        let cleanedDescription = description.trimmingCharacters(in: .whitespacesAndNewlines)
-        let factualDescription = cleanedDescription.isEmpty
-            ? "Unable to analyze this image. The image description is empty, so ask for another photo before making visual claims."
-            : cleanedDescription
+        var analysis = try await vision.analyzePhoto(at: imageURL)
+        if analysis.imagePath != imageURL.path {
+            analysis = PhotoAnalysisResult(
+                imagePath: imageURL.path,
+                width: analysis.width,
+                height: analysis.height,
+                ocrText: analysis.ocrText,
+                detectedLabels: analysis.detectedLabels,
+                faceCount: analysis.faceCount,
+                barcodeCount: analysis.barcodeCount
+            )
+        }
 
-        InsightEngineLog.info("Image analysis completed for \(imageURL.lastPathComponent): \(factualDescription)")
-        return VisualContext(imagePath: imageURL.path, caption: factualDescription)
+        InsightEngineLog.info(
+            "Photo OCR completed for \(imageURL.lastPathComponent): \(analysis.ocrText.prefix(120))"
+        )
+        return VisualContext(analysis: analysis)
     }
 
     private func retrieveRelevantMemory(for userQuestion: String) -> RelevantMemoryContext {
@@ -537,7 +554,16 @@ public actor InsightEngine {
 
     private func retrieveRelevantKnowledge(for userQuestion: String) -> RetrievedKnowledgeContext {
         let volumes = MindBootstrap.enabledVolumes(from: repository)
-        return knowledgeRetriever.retrieve(query: userQuestion, volumes: volumes)
+        let query: String
+        if let context = visualContext {
+            query = context.analysis.retrievalQuery(
+                userQuestion: userQuestion,
+                editedOcr: context.editedOcrText
+            )
+        } else {
+            query = userQuestion
+        }
+        return knowledgeRetriever.retrieve(query: query, volumes: volumes)
     }
 
     private func logAgentDebug(

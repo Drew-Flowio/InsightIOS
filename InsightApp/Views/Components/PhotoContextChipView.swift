@@ -2,14 +2,28 @@ import SwiftUI
 
 struct PhotoContextChipView: View {
     let caption: String
+    var thumbnailURL: URL?
     let onClear: () -> Void
 
     var body: some View {
         HStack(alignment: .top, spacing: InsightSpacing.sm) {
-            Image(systemName: "viewfinder")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(InsightColors.accent)
-                .padding(.top, 2)
+            if let thumbnailURL {
+                AsyncImage(url: thumbnailURL) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image.resizable().scaledToFill()
+                    default:
+                        Color.clear
+                    }
+                }
+                .frame(width: 36, height: 36)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            } else {
+                Image(systemName: "viewfinder")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(InsightColors.accent)
+                    .padding(.top, 2)
+            }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Active photo context")

@@ -4,12 +4,22 @@ import InsightCore
 public struct MockVisionAdapter: VisionServing {
     public init() {}
 
+    public func analyzePhoto(at imageURL: URL) async throws -> PhotoAnalysisResult {
+        try await Task.sleep(for: .milliseconds(200))
+        return PhotoAnalysisResult(
+            imagePath: imageURL.path,
+            width: 1280,
+            height: 960,
+            ocrText: "YAMAHA F150\nWARNING: HOT SURFACE\nMODEL 63P-12345-01",
+            detectedLabels: ["outboard motor", "engine"],
+            faceCount: 0,
+            barcodeCount: 0
+        )
+    }
+
     public func describeImage(at imageURL: URL) async throws -> String {
-        try await Task.sleep(for: .milliseconds(500))
-        return """
-        A stainless steel electric kettle on a kitchen counter. \
-        The power cord is plugged in and there's no visible damage.
-        """
+        let analysis = try await analyzePhoto(at: imageURL)
+        return analysis.promptBlock(editedOcr: nil)
     }
 }
 

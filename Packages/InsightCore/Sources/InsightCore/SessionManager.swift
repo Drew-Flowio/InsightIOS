@@ -28,6 +28,22 @@ public struct SessionManager: Sendable {
     }
 
     @discardableResult
+    public mutating func recordPhotoQuestion(
+        question: String,
+        imagePath: String,
+        ocrText: String
+    ) -> MessageRecord {
+        repository.addMessage(
+            sessionID: currentSession.id,
+            role: "user",
+            content: question,
+            source: "photo",
+            imagePath: imagePath,
+            ocrText: ocrText
+        )
+    }
+
+    @discardableResult
     public mutating func recordAssistantMessage(
         text: String,
         promptVersionID: String?,

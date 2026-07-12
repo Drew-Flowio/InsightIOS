@@ -217,7 +217,7 @@ public struct PromptBuilder: Sendable {
         return buildAgentPrompt(
             AgentPromptInput(
                 userQuestion: currentUtterance,
-                imageDescription: visualContext?.caption,
+                imageDescription: visualContext?.promptBlock(),
                 relevantMemory: memory,
                 recentConversation: recentConversation
             ),

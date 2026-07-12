@@ -26,8 +26,19 @@ struct MainChatView: View {
                     streamingMessageID: viewModel.streamingMessageID
                 )
 
-                if let caption = viewModel.photoContextCaption {
-                    PhotoContextChipView(caption: caption) {
+                if viewModel.hasPhotoAttachment {
+                    PhotoOcrEditView(
+                        ocrText: $viewModel.photoOcrText,
+                        thumbnailURL: viewModel.photoThumbnailURL,
+                        onClear: viewModel.clearPhotoContext
+                    )
+                    .padding(.horizontal, InsightSpacing.md)
+                    .padding(.bottom, InsightSpacing.xs)
+                } else if let caption = viewModel.photoContextCaption {
+                    PhotoContextChipView(
+                        caption: caption,
+                        thumbnailURL: viewModel.photoThumbnailURL
+                    ) {
                         viewModel.clearPhotoContext()
                     }
                     .padding(.horizontal, InsightSpacing.md)
