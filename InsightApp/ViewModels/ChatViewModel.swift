@@ -316,7 +316,7 @@ final class ChatViewModel {
         }
     }
 
-    func importMind(from url: URL) {
+    func importLibraryFile(from url: URL) {
         guard let engine else { return }
 
         Task {
@@ -329,13 +329,23 @@ final class ChatViewModel {
 
             do {
                 let data = try Data(contentsOf: url)
-                let outcome = await engine.importMind(from: data)
+                let filename = url.lastPathComponent
+                let outcome: MindImportOutcome
+                if url.pathExtension.lowercased() == "pdf" {
+                    outcome = await engine.importManual(from: data, suggestedFilename: filename)
+                } else {
+                    outcome = await engine.importMind(from: data)
+                }
                 mindsFeedbackMessage = message(for: outcome)
                 await loadMinds()
             } catch {
-                mindsFeedbackMessage = "Could not read this Mind file."
+                mindsFeedbackMessage = "Could not read the selected file."
             }
         }
+    }
+
+    func importMind(from url: URL) {
+        importLibraryFile(from: url)
     }
 
     func clearMindsFeedback() {

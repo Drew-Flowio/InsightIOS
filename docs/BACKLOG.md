@@ -15,6 +15,7 @@ Architecture requirements live in [VISION_LAYER.md](./VISION_LAYER.md).
 | v1.4 | Mind library, import, enable/disable |
 | v1.5 | Real voice loop (Whisper STT, TTS, hold-to-talk) |
 | v1.6 | Photo questions with Apple Vision OCR bridge, persistence, editable OCR |
+| v1.7 | User-owned PDF manuals as private local knowledge volumes |
 
 ---
 

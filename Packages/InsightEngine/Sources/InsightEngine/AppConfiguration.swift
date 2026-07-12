@@ -11,6 +11,7 @@ public struct AppConfiguration: Sendable {
     public let assistantName: String
     public let databaseURL: URL
     public let uploadsDirectoryURL: URL
+    public let manualsDirectoryURL: URL
     public let modelsDirectoryURL: URL
 
     public init(
@@ -20,6 +21,7 @@ public struct AppConfiguration: Sendable {
         assistantName: String = "Insight",
         databaseURL: URL,
         uploadsDirectoryURL: URL,
+        manualsDirectoryURL: URL,
         modelsDirectoryURL: URL
     ) {
         self.mockMode = mockMode
@@ -28,6 +30,7 @@ public struct AppConfiguration: Sendable {
         self.assistantName = assistantName
         self.databaseURL = databaseURL
         self.uploadsDirectoryURL = uploadsDirectoryURL
+        self.manualsDirectoryURL = manualsDirectoryURL
         self.modelsDirectoryURL = modelsDirectoryURL
     }
 
@@ -44,6 +47,7 @@ public struct AppConfiguration: Sendable {
             modelBundle: bundle,
             databaseURL: support.appendingPathComponent("insight_app.db"),
             uploadsDirectoryURL: support.appendingPathComponent("uploads", isDirectory: true),
+            manualsDirectoryURL: support.appendingPathComponent("manuals", isDirectory: true),
             modelsDirectoryURL: modelsDirectory
         )
     }

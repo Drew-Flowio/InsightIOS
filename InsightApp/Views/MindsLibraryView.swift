@@ -16,7 +16,7 @@ struct MindsLibraryView: View {
                 if viewModel.minds.isEmpty {
                     EmptyStateView(
                         title: "No Minds installed",
-                        subtitle: "Import an .ogpack file to add local knowledge volumes."
+                        subtitle: "Import an .ogpack Mind or a PDF manual to add local knowledge."
                     )
                 } else {
                     List {
@@ -54,13 +54,13 @@ struct MindsLibraryView: View {
             }
             .fileImporter(
                 isPresented: $showImporter,
-                allowedContentTypes: [.json, .data, ogpackType],
+                allowedContentTypes: [.pdf, .json, .data, ogpackType],
                 allowsMultipleSelection: false
             ) { result in
                 switch result {
                 case .success(let urls):
                     guard let url = urls.first else { return }
-                    viewModel.importMind(from: url)
+                    viewModel.importLibraryFile(from: url)
                 case .failure:
                     viewModel.mindsFeedbackMessage = "Could not open the selected file."
                 }

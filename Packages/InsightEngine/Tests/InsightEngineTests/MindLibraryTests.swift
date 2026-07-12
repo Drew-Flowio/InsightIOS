@@ -50,6 +50,7 @@ final class MindLibraryTests: XCTestCase {
             mockMode: true,
             databaseURL: base.appendingPathComponent("test.db"),
             uploadsDirectoryURL: base.appendingPathComponent("uploads"),
+            manualsDirectoryURL: base.appendingPathComponent("manuals"),
             modelsDirectoryURL: base.appendingPathComponent("models")
         )
         return try InsightEngine(configuration: config)

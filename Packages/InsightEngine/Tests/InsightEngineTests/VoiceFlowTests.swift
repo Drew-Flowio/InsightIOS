@@ -70,6 +70,7 @@ final class VoiceFlowTests: XCTestCase {
             mockMode: true,
             databaseURL: tempDirectory.appendingPathComponent("voice.db"),
             uploadsDirectoryURL: tempDirectory.appendingPathComponent("uploads"),
+            manualsDirectoryURL: tempDirectory.appendingPathComponent("manuals"),
             modelsDirectoryURL: tempDirectory.appendingPathComponent("models")
         )
         return try InsightEngine(configuration: config)

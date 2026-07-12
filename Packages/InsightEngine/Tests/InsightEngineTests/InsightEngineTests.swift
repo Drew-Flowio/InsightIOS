@@ -21,6 +21,7 @@ final class InsightEngineTests: XCTestCase {
             mockMode: true,
             databaseURL: tempDirectory.appendingPathComponent("test.db"),
             uploadsDirectoryURL: tempDirectory.appendingPathComponent("uploads"),
+            manualsDirectoryURL: tempDirectory.appendingPathComponent("manuals"),
             modelsDirectoryURL: tempDirectory.appendingPathComponent("models")
         )
         let engine = try InsightEngine(configuration: config)
@@ -49,6 +50,7 @@ final class InsightEngineTests: XCTestCase {
             mockMode: true,
             databaseURL: tempDirectory.appendingPathComponent("cancel.db"),
             uploadsDirectoryURL: tempDirectory.appendingPathComponent("uploads"),
+            manualsDirectoryURL: tempDirectory.appendingPathComponent("manuals"),
             modelsDirectoryURL: tempDirectory.appendingPathComponent("models")
         )
         let engine = try InsightEngine(configuration: config)
@@ -77,6 +79,7 @@ final class InsightEngineTests: XCTestCase {
             mockMode: true,
             databaseURL: tempDirectory.appendingPathComponent("prompt.db"),
             uploadsDirectoryURL: tempDirectory.appendingPathComponent("uploads"),
+            manualsDirectoryURL: tempDirectory.appendingPathComponent("manuals"),
             modelsDirectoryURL: tempDirectory.appendingPathComponent("models")
         )
         let engine = try InsightEngine(configuration: config)

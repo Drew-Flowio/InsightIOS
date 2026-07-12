@@ -25,7 +25,7 @@ public struct KnowledgeRetriever: Sendable {
                         volumeTitle: volume.title,
                         recordID: record.id,
                         recordTitle: record.title,
-                        excerpt: excerpt(from: record.content)
+                        excerpt: attributedExcerpt(for: record)
                     ),
                     score
                 ))
@@ -59,6 +59,19 @@ public struct KnowledgeRetriever: Sendable {
         let contentOverlap = queryTokens.intersection(contentTokens).count
 
         return titleOverlap + tagOverlap + volumeTagOverlap + contentOverlap
+    }
+
+    private func attributedExcerpt(for record: KnowledgeRecord) -> String {
+        let body = excerpt(from: record.content)
+        if let pageNumber = pageNumber(from: record.tags) {
+            return "p. \(pageNumber) — \(body)"
+        }
+        return body
+    }
+
+    private func pageNumber(from tags: [String]) -> Int? {
+        guard let tag = tags.first(where: { $0.hasPrefix("page:") }) else { return nil }
+        return Int(tag.replacingOccurrences(of: "page:", with: ""))
     }
 
     private func excerpt(from content: String, limit: Int = 320) -> String {

@@ -32,6 +32,10 @@ public actor InsightEngine {
             withIntermediateDirectories: true
         )
         try FileManager.default.createDirectory(
+            at: configuration.manualsDirectoryURL,
+            withIntermediateDirectories: true
+        )
+        try FileManager.default.createDirectory(
             at: configuration.modelsDirectoryURL,
             withIntermediateDirectories: true
         )
@@ -330,6 +334,15 @@ public actor InsightEngine {
 
     public func importMind(from data: Data) -> MindImportOutcome {
         MindImporter.importOGPack(data: data, into: repository)
+    }
+
+    public func importManual(from data: Data, suggestedFilename: String) -> MindImportOutcome {
+        ManualImporter.importPDF(
+            data: data,
+            suggestedFilename: suggestedFilename,
+            into: repository,
+            manualsDirectory: configuration.manualsDirectoryURL
+        )
     }
 
     public func resetMemory(scope: ResetScope = .session) async {
