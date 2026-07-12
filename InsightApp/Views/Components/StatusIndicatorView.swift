@@ -4,6 +4,8 @@ import InsightCore
 struct StatusIndicatorView: View {
     let state: AppState
     let assistantName: String
+    var personalityName: String?
+    var onOpenPersonality: (() -> Void)?
     var onOpenMinds: (() -> Void)?
     var onOpenMemory: (() -> Void)?
 
@@ -29,11 +31,29 @@ struct StatusIndicatorView: View {
                         .textCase(.uppercase)
                         .tracking(0.6)
                 }
+
+                if let personalityName, !personalityName.isEmpty {
+                    Button(action: { onOpenPersonality?() }) {
+                        Text(personalityName)
+                            .font(InsightTypography.caption())
+                            .foregroundStyle(InsightColors.textSecondary.opacity(0.85))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(onOpenPersonality == nil)
+                }
             }
 
             Spacer()
 
             HStack(spacing: InsightSpacing.xs) {
+                if let onOpenPersonality {
+                    Button(action: onOpenPersonality) {
+                        Image(systemName: "theatermasks")
+                    }
+                    .buttonStyle(InsightIconButtonStyle())
+                    .accessibilityLabel("Personality")
+                }
+
                 if let onOpenMemory {
                     Button(action: onOpenMemory) {
                         Image(systemName: "brain.head.profile")

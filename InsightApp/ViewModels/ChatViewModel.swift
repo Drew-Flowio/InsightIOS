@@ -36,11 +36,16 @@ final class ChatViewModel {
     var showPhotoPicker = false
     var showMindsLibrary = false
     var showMemoryScreen = false
+    var showPersonalityScreen = false
     var selectedPhotoItem: PhotosPickerItem?
 
     private(set) var minds: [MindLibraryItem] = []
     private(set) var mindsFeedbackMessage: String?
     private(set) var memoryFacts: [MemoryFactRecord] = []
+    private(set) var personalityPresets: [PersonalityPreset] = []
+    private(set) var activePersonalityName = "Offgrid Guide"
+    var selectedPersonalityID = PersonalityCatalog.defaultPresetID
+    var customPersonalityPrompt = ""
     var userProfileName = ""
     var userProfileStyle = "balanced"
     var userProfileNotes = ""
@@ -387,6 +392,50 @@ final class ChatViewModel {
         }
     }
 
+    func loadPersonality() async {
+        guard let engine else { return }
+        personalityPresets = await engine.listPersonalityPresets()
+        let active = await engine.getActivePersonality()
+        activePersonalityName = active.name
+        selectedPersonalityID = active.presetID
+        if active.presetID == PersonalityCatalog.customPresetID {
+            customPersonalityPrompt = active.promptText
+        }
+    }
+
+    func selectPersonality(id: String) {
+        guard let engine else { return }
+
+        Task {
+            let selection = await engine.selectPersonality(presetID: id)
+            activePersonalityName = selection.name
+            selectedPersonalityID = selection.presetID
+            if selection.presetID == PersonalityCatalog.customPresetID {
+                customPersonalityPrompt = selection.promptText
+            }
+        }
+    }
+
+    func saveCustomPersonality() {
+        guard let engine else { return }
+
+        Task {
+            let selection = await engine.updateCustomPersonalityPrompt(customPersonalityPrompt)
+            activePersonalityName = selection.name
+            selectedPersonalityID = selection.presetID
+        }
+    }
+
+    func restoreDefaultPersonality() {
+        guard let engine else { return }
+
+        Task {
+            let selection = await engine.restoreDefaultPersonality()
+            activePersonalityName = selection.name
+            selectedPersonalityID = selection.presetID
+        }
+    }
+
     private func message(for outcome: MindImportOutcome) -> String {
         switch outcome {
         case .imported(let title):
@@ -434,6 +483,7 @@ final class ChatViewModel {
             try await engine.prepareRuntime()
             self.engine = engine
             await reloadHistory(from: engine)
+            await loadPersonality()
             if let context = await engine.getVisualContext() {
                 photoContextCaption = context.caption
                 photoOcrText = context.analysis.resolvedOcrText(edited: context.editedOcrText)

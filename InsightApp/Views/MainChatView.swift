@@ -16,6 +16,8 @@ struct MainChatView: View {
                 StatusIndicatorView(
                     state: viewModel.appState,
                     assistantName: viewModel.assistantName,
+                    personalityName: viewModel.activePersonalityName,
+                    onOpenPersonality: { viewModel.showPersonalityScreen = true },
                     onOpenMinds: { viewModel.showMindsLibrary = true },
                     onOpenMemory: { viewModel.showMemoryScreen = true }
                 )
@@ -108,6 +110,9 @@ struct MainChatView: View {
         }
         .sheet(isPresented: $viewModel.showMemoryScreen) {
             MemoryView(viewModel: viewModel)
+        }
+        .sheet(isPresented: $viewModel.showPersonalityScreen) {
+            PersonalityView(viewModel: viewModel)
         }
     }
 

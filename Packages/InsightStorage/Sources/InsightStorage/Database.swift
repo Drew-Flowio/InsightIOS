@@ -80,6 +80,13 @@ enum Database {
         general_notes   TEXT,
         updated_at      TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS personality_settings (
+        id                  TEXT PRIMARY KEY,
+        active_preset_id    TEXT NOT NULL,
+        custom_prompt       TEXT,
+        updated_at          TEXT NOT NULL
+    );
     """
 
     static func open(at path: String) throws -> OpaquePointer {

@@ -278,6 +278,41 @@ public final class Repository: @unchecked Sendable {
         return profile
     }
 
+    // MARK: - Personality settings
+
+    public func getPersonalitySettings() -> PersonalitySettingsRecord? {
+        queryOne(
+            """
+            SELECT active_preset_id, custom_prompt, updated_at
+            FROM personality_settings WHERE id = 'default' LIMIT 1
+            """,
+            map: Self.mapPersonalitySettings
+        )
+    }
+
+    @discardableResult
+    public func savePersonalitySettings(activePresetID: String, customPrompt: String?) -> PersonalitySettingsRecord {
+        let settings = PersonalitySettingsRecord(
+            activePresetID: activePresetID,
+            customPrompt: Self.normalizedOptional(customPrompt),
+            updatedAt: Self.now()
+        )
+
+        execute("DELETE FROM personality_settings WHERE id = 'default'")
+        execute(
+            """
+            INSERT INTO personality_settings (id, active_preset_id, custom_prompt, updated_at)
+            VALUES ('default', ?, ?, ?)
+            """,
+            bindings: [
+                .text(settings.activePresetID),
+                settings.customPrompt.map(SQLValue.text) ?? .null,
+                .text(settings.updatedAt),
+            ]
+        )
+        return settings
+    }
+
     // MARK: - Knowledge volumes
 
     public func knowledgeVolumeExists(id: String) -> Bool {
@@ -581,6 +616,14 @@ public final class Repository: @unchecked Sendable {
             responseStyle: columnOptionalText(statement, 1),
             generalNotes: columnOptionalText(statement, 2),
             updatedAt: columnText(statement, 3)
+        )
+    }
+
+    private static func mapPersonalitySettings(_ statement: OpaquePointer) -> PersonalitySettingsRecord {
+        PersonalitySettingsRecord(
+            activePresetID: columnText(statement, 0),
+            customPrompt: columnOptionalText(statement, 1),
+            updatedAt: columnText(statement, 2)
         )
     }
 

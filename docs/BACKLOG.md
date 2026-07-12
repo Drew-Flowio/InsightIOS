@@ -17,6 +17,7 @@ Architecture requirements live in [VISION_LAYER.md](./VISION_LAYER.md).
 | v1.6 | Photo questions with Apple Vision OCR bridge, persistence, editable OCR |
 | v1.7 | User-owned PDF manuals as private local knowledge volumes |
 | v1.8 | Personal memory — profile, remember/recall/forget commands, Memory screen |
+| v1.9 | Personality presets, custom prompt editing, active identity display |
 
 ---
 

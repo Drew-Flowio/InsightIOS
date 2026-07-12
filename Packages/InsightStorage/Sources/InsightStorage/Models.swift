@@ -184,3 +184,15 @@ public struct UserProfileRecord: Sendable, Equatable {
         self.updatedAt = updatedAt
     }
 }
+
+public struct PersonalitySettingsRecord: Sendable, Equatable {
+    public let activePresetID: String
+    public let customPrompt: String?
+    public let updatedAt: String
+
+    public init(activePresetID: String, customPrompt: String?, updatedAt: String) {
+        self.activePresetID = activePresetID
+        self.customPrompt = customPrompt
+        self.updatedAt = updatedAt
+    }
+}

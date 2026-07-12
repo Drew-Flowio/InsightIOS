@@ -59,6 +59,7 @@ public actor InsightEngine {
         InsightEngineLog.info(services.llmBackendDebugDescription)
 
         try Self.seedInitialPromptIfNeeded(in: repository)
+        Self.seedPersonalityIfNeeded(in: repository)
         MindBootstrap.seedBundledMindsIfNeeded(in: repository)
     }
 
@@ -254,13 +255,54 @@ public actor InsightEngine {
 
     // MARK: - Personality
 
+    public func listPersonalityPresets() -> [PersonalityPreset] {
+        PersonalityCatalog.presets
+    }
+
+    public func getActivePersonality() -> PersonalitySelection {
+        resolveActivePersonality()
+    }
+
+    @discardableResult
+    public func selectPersonality(presetID: String) -> PersonalitySelection {
+        let settings = repository.getPersonalitySettings()
+        let customPrompt = presetID == PersonalityCatalog.customPresetID
+            ? settings?.customPrompt ?? PersonalityCatalog.defaultCustomSeed()
+            : settings?.customPrompt
+        _ = repository.savePersonalitySettings(activePresetID: presetID, customPrompt: customPrompt)
+        return syncActivePersonalityPrompt()
+    }
+
+    @discardableResult
+    public func updateCustomPersonalityPrompt(_ text: String) -> PersonalitySelection {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        _ = repository.savePersonalitySettings(
+            activePresetID: PersonalityCatalog.customPresetID,
+            customPrompt: trimmed.isEmpty ? PersonalityCatalog.defaultCustomSeed() : trimmed
+        )
+        return syncActivePersonalityPrompt()
+    }
+
+    @discardableResult
+    public func restoreDefaultPersonality() -> PersonalitySelection {
+        _ = repository.savePersonalitySettings(
+            activePresetID: PersonalityCatalog.defaultPresetID,
+            customPrompt: repository.getPersonalitySettings()?.customPrompt
+        )
+        return syncActivePersonalityPrompt()
+    }
+
     public func getSystemPrompt() -> String {
-        repository.getActivePromptVersion()?.content ?? ""
+        resolveActivePersonality().promptText
     }
 
     @discardableResult
     public func updatePrompt(newText: String, label: String? = nil) -> PromptVersionRecord {
-        repository.savePromptVersion(content: newText, label: label)
+        _ = repository.savePersonalitySettings(
+            activePresetID: PersonalityCatalog.customPresetID,
+            customPrompt: newText
+        )
+        return repository.savePromptVersion(content: newText, label: label ?? PersonalityCatalog.customPresetID)
     }
 
     public func getPromptHistory() -> [PromptVersionRecord] {
@@ -269,7 +311,11 @@ public actor InsightEngine {
 
     @discardableResult
     public func activatePromptVersion(versionID: String) -> PromptVersionRecord? {
-        repository.activatePromptVersion(versionID: versionID)
+        guard let version = repository.activatePromptVersion(versionID: versionID) else {
+            return nil
+        }
+        _ = updateCustomPersonalityPrompt(version.content)
+        return version
     }
 
     // MARK: - Memory
@@ -430,7 +476,7 @@ public actor InsightEngine {
             return memoryResult
         }
 
-        let personalityPrompt = activePrompt?.content ?? DefaultPrompts.bundledSystemPrompt()
+        let personalityPrompt = resolveActivePersonality().promptText
         let userProfile = loadUserProfileContext()
         let relevantMemory = retrieveRelevantMemory(for: utterance)
         let retrievedKnowledge = retrieveRelevantKnowledge(for: utterance)
@@ -700,7 +746,30 @@ public actor InsightEngine {
         }
         _ = repository.savePromptVersion(
             content: DefaultPrompts.bundledSystemPrompt(),
-            label: "initial"
+            label: PersonalityCatalog.defaultPresetID
+        )
+    }
+
+    private static func seedPersonalityIfNeeded(in repository: Repository) {
+        guard repository.getPersonalitySettings() == nil else { return }
+        _ = repository.savePersonalitySettings(
+            activePresetID: PersonalityCatalog.defaultPresetID,
+            customPrompt: PersonalityCatalog.defaultCustomSeed()
+        )
+    }
+
+    @discardableResult
+    private func syncActivePersonalityPrompt() -> PersonalitySelection {
+        let selection = resolveActivePersonality()
+        _ = repository.savePromptVersion(content: selection.promptText, label: selection.presetID)
+        return selection
+    }
+
+    private func resolveActivePersonality() -> PersonalitySelection {
+        let settings = repository.getPersonalitySettings()
+        return PersonalityCatalog.resolveSelection(
+            activePresetID: settings?.activePresetID ?? PersonalityCatalog.defaultPresetID,
+            customPrompt: settings?.customPrompt
         )
     }
 
