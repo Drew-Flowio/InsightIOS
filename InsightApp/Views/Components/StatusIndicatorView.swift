@@ -5,6 +5,7 @@ struct StatusIndicatorView: View {
     let state: AppState
     let assistantName: String
     var onOpenMinds: (() -> Void)?
+    var onOpenMemory: (() -> Void)?
 
     @State private var pulse = false
 
@@ -32,12 +33,22 @@ struct StatusIndicatorView: View {
 
             Spacer()
 
-            if let onOpenMinds {
-                Button(action: onOpenMinds) {
-                    Image(systemName: "books.vertical")
+            HStack(spacing: InsightSpacing.xs) {
+                if let onOpenMemory {
+                    Button(action: onOpenMemory) {
+                        Image(systemName: "brain.head.profile")
+                    }
+                    .buttonStyle(InsightIconButtonStyle())
+                    .accessibilityLabel("Memory")
                 }
-                .buttonStyle(InsightIconButtonStyle())
-                .accessibilityLabel("Minds")
+
+                if let onOpenMinds {
+                    Button(action: onOpenMinds) {
+                        Image(systemName: "books.vertical")
+                    }
+                    .buttonStyle(InsightIconButtonStyle())
+                    .accessibilityLabel("Minds")
+                }
             }
         }
         .padding(.horizontal, InsightSpacing.lg)

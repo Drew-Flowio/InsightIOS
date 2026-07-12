@@ -33,6 +33,7 @@
 		A10000000000000000000017 /* KnowledgeSourcesSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000017 /* KnowledgeSourcesSection.swift */; };
 		A10000000000000000000018 /* MindsLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000018 /* MindsLibraryView.swift */; };
 		A10000000000000000000019 /* PhotoOcrEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000019 /* PhotoOcrEditView.swift */; };
+		A1000000000000000000001A /* MemoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001A /* MemoryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -62,6 +63,7 @@
 		A20000000000000000000017 /* KnowledgeSourcesSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeSourcesSection.swift; sourceTree = "<group>"; };
 		A20000000000000000000018 /* MindsLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindsLibraryView.swift; sourceTree = "<group>"; };
 		A20000000000000000000019 /* PhotoOcrEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoOcrEditView.swift; sourceTree = "<group>"; };
+		A2000000000000000000001A /* MemoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryView.swift; sourceTree = "<group>"; };
 		A30000000000000000000001 /* InsightIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InsightIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -158,6 +160,7 @@
 			children = (
 				A20000000000000000000002 /* MainChatView.swift */,
 				A20000000000000000000018 /* MindsLibraryView.swift */,
+				A2000000000000000000001A /* MemoryView.swift */,
 				A6000000000000000000000A /* Components */,
 			);
 			path = Views;
@@ -281,6 +284,7 @@
 				A10000000000000000000017 /* KnowledgeSourcesSection.swift in Sources */,
 				A10000000000000000000018 /* MindsLibraryView.swift in Sources */,
 				A10000000000000000000019 /* PhotoOcrEditView.swift in Sources */,
+				A1000000000000000000001A /* MemoryView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -72,6 +72,14 @@ enum Database {
 
     CREATE INDEX IF NOT EXISTS idx_knowledge_records_volume ON knowledge_records(volume_id);
     CREATE INDEX IF NOT EXISTS idx_message_knowledge_sources_message ON message_knowledge_sources(message_id);
+
+    CREATE TABLE IF NOT EXISTS user_profile (
+        id              TEXT PRIMARY KEY,
+        display_name    TEXT,
+        response_style  TEXT,
+        general_notes   TEXT,
+        updated_at      TEXT NOT NULL
+    );
     """
 
     static func open(at path: String) throws -> OpaquePointer {

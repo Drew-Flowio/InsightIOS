@@ -10,6 +10,8 @@ public actor InsightEngine {
     private var sessionManager: SessionManager
     private let promptBuilder = PromptBuilder()
     private let knowledgeRetriever = KnowledgeRetriever()
+    private let memoryCommandParser = MemoryCommandParser()
+    private let personalMemoryRetriever = PersonalMemoryRetriever()
 
     private let llm: any LlmServing
     private let stt: any SttServing
@@ -285,6 +287,24 @@ public actor InsightEngine {
         repository.removeMemoryFact(factID: factID)
     }
 
+    public func getUserProfile() -> UserProfileContext {
+        loadUserProfileContext()
+    }
+
+    @discardableResult
+    public func updateUserProfile(
+        displayName: String?,
+        responseStyle: String?,
+        generalNotes: String?
+    ) -> UserProfileContext {
+        _ = repository.upsertUserProfile(
+            displayName: displayName,
+            responseStyle: responseStyle,
+            generalNotes: generalNotes
+        )
+        return loadUserProfileContext()
+    }
+
     // MARK: - Session
 
     public func getHistory() -> [MessageRecord] {
@@ -387,36 +407,6 @@ public actor InsightEngine {
         InsightEngineLog.info("Turn \(turnID) starting: source=\(source), recordUser=\(recordUser), existingMessages=\(sessionManager.messageCount()).")
 
         let activePrompt = repository.getActivePromptVersion()
-        let personalityPrompt = activePrompt?.content ?? DefaultPrompts.bundledSystemPrompt()
-        let relevantMemory = retrieveRelevantMemory(for: utterance)
-        let retrievedKnowledge = retrieveRelevantKnowledge(for: utterance)
-        let (historyMessages, summaryNote) = sessionManager.getPromptHistoryMessages()
-        let recentConversation = promptBuilder.summarizeConversation(
-            historyMessages: historyMessages,
-            summaryNote: summaryNote
-        )
-
-        let (messages, debugText) = promptBuilder.buildAgentPrompt(
-            AgentPromptInput(
-                userQuestion: utterance,
-                imageDescription: visualContext?.promptBlock(),
-                relevantMemory: relevantMemory,
-                retrievedKnowledge: retrievedKnowledge,
-                recentConversation: recentConversation,
-                timestamp: Date(),
-                currentMode: source
-            ),
-            personalityPrompt: personalityPrompt
-        )
-
-        logAgentDebug(
-            turnID: turnID,
-            userQuestion: utterance,
-            imageDescription: visualContext?.promptBlock(),
-            relevantMemory: relevantMemory,
-            retrievedKnowledge: retrievedKnowledge,
-            promptLength: debugText.count
-        )
 
         if recordUser {
             if let context = visualContext, source == "photo" {
@@ -430,6 +420,49 @@ public actor InsightEngine {
             }
             InsightEngineLog.info("Turn \(turnID) user message persisted.")
         }
+
+        if let memoryResult = handleMemoryCommandIfNeeded(
+            utterance: utterance,
+            activePrompt: activePrompt,
+            started: started
+        ) {
+            InsightEngineLog.info("Turn \(turnID) handled as personal memory command.")
+            return memoryResult
+        }
+
+        let personalityPrompt = activePrompt?.content ?? DefaultPrompts.bundledSystemPrompt()
+        let userProfile = loadUserProfileContext()
+        let relevantMemory = retrieveRelevantMemory(for: utterance)
+        let retrievedKnowledge = retrieveRelevantKnowledge(for: utterance)
+        let (historyMessages, summaryNote) = sessionManager.getPromptHistoryMessages()
+        let recentConversation = promptBuilder.summarizeConversation(
+            historyMessages: historyMessages,
+            summaryNote: summaryNote
+        )
+
+        let (messages, debugText) = promptBuilder.buildAgentPrompt(
+            AgentPromptInput(
+                userQuestion: utterance,
+                imageDescription: visualContext?.promptBlock(),
+                userProfile: userProfile,
+                relevantMemory: relevantMemory,
+                retrievedKnowledge: retrievedKnowledge,
+                recentConversation: recentConversation,
+                timestamp: Date(),
+                currentMode: source
+            ),
+            personalityPrompt: personalityPrompt
+        )
+
+        logAgentDebug(
+            turnID: turnID,
+            userQuestion: utterance,
+            imageDescription: visualContext?.promptBlock(),
+            userProfile: userProfile,
+            relevantMemory: relevantMemory,
+            retrievedKnowledge: retrievedKnowledge,
+            promptLength: debugText.count
+        )
 
         await setState(.thinking, notify: onState)
         InsightEngineLog.info("Turn \(turnID) state set to thinking; unloading STT before LLM generation if loaded.")
@@ -523,46 +556,98 @@ public actor InsightEngine {
         return VisualContext(analysis: analysis)
     }
 
+    private func handleMemoryCommandIfNeeded(
+        utterance: String,
+        activePrompt: PromptVersionRecord?,
+        started: CFAbsoluteTime
+    ) -> TurnResult? {
+        let command = memoryCommandParser.parse(utterance)
+        guard command != .none else { return nil }
+
+        let profile = loadUserProfileContext()
+        let replyText: String
+
+        switch command {
+        case .remember(let fact):
+            if personalMemoryRetriever.isValidMemoryFact(fact) {
+                _ = repository.addMemoryFact(text: fact)
+                replyText = "Got it — I'll remember that."
+            } else {
+                replyText = "I can only save short personal facts you explicitly ask me to remember."
+            }
+
+        case .recall(let query):
+            let facts = repository.listMemoryFacts().map(\.text)
+            replyText = personalMemoryRetriever.formatRecallReply(
+                facts: facts,
+                profile: profile,
+                query: query
+            )
+
+        case .forget(let target):
+            let normalized = target.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            if normalized == "everything" || normalized == "all" || normalized == "all my memories" {
+                let count = repository.listMemoryFacts().count
+                repository.clearAllMemoryFacts()
+                replyText = count > 0
+                    ? "Okay, I've cleared your saved personal memories."
+                    : "You don't have any saved personal memories yet."
+            } else {
+                let activeFacts = repository.listMemoryFacts()
+                let matchingTexts = Set(
+                    personalMemoryRetriever.matchingFactTexts(
+                        facts: activeFacts.map(\.text),
+                        target: target
+                    )
+                )
+                let idsToRemove = activeFacts.filter { matchingTexts.contains($0.text) }.map(\.id)
+                idsToRemove.forEach { repository.removeMemoryFact(factID: $0) }
+                switch idsToRemove.count {
+                case 0:
+                    replyText = "I couldn't find a matching memory to remove."
+                case 1:
+                    replyText = "Okay, I've forgotten that."
+                default:
+                    replyText = "Okay, I've removed \(idsToRemove.count) memories."
+                }
+            }
+
+        case .none:
+            return nil
+        }
+
+        let latencyMs = Int((CFAbsoluteTimeGetCurrent() - started) * 1000)
+        _ = sessionManager.recordAssistantMessage(
+            text: replyText,
+            promptVersionID: activePrompt?.id,
+            latencyMs: latencyMs,
+            cancelled: false,
+            knowledgeSources: []
+        )
+
+        return TurnResult(
+            replyText: replyText,
+            cancelled: false,
+            latencyMs: latencyMs,
+            promptVersionID: activePrompt?.id,
+            assembledPromptDebug: "[MEMORY COMMAND]\n\(replyText)"
+        )
+    }
+
+    private func loadUserProfileContext() -> UserProfileContext {
+        guard let profile = repository.getUserProfile() else {
+            return UserProfileContext()
+        }
+        return UserProfileContext(
+            displayName: profile.displayName,
+            responseStyle: profile.responseStyle,
+            generalNotes: profile.generalNotes
+        )
+    }
+
     private func retrieveRelevantMemory(for userQuestion: String) -> RelevantMemoryContext {
         let facts = repository.listMemoryFacts().map(\.text)
-        guard !facts.isEmpty else { return RelevantMemoryContext() }
-
-        let questionTokens = Self.keywords(in: userQuestion)
-        let scoredFacts = facts.compactMap { fact -> (text: String, score: Int, category: MemoryCategory)? in
-            let category = Self.category(forMemoryFact: fact)
-            let factTokens = Self.keywords(in: fact)
-            let overlap = questionTokens.intersection(factTokens).count
-            let alwaysUsefulPreference = category == .preference && Self.isAnswerStylePreference(fact)
-            let score = overlap + (alwaysUsefulPreference ? 2 : 0)
-            guard score > 0 else { return nil }
-            return (fact, score, category)
-        }
-        .sorted { lhs, rhs in
-            if lhs.score == rhs.score { return lhs.text.count < rhs.text.count }
-            return lhs.score > rhs.score
-        }
-        .prefix(8)
-
-        var preferences: [String] = []
-        var userFacts: [String] = []
-        var pastContext: [String] = []
-
-        for item in scoredFacts {
-            switch item.category {
-            case .preference:
-                preferences.append(item.text)
-            case .userFact:
-                userFacts.append(item.text)
-            case .pastContext:
-                pastContext.append(item.text)
-            }
-        }
-
-        return RelevantMemoryContext(
-            userPreferences: Array(preferences.prefix(3)),
-            userFacts: Array(userFacts.prefix(3)),
-            pastConversationContext: Array(pastContext.prefix(2))
-        )
+        return personalMemoryRetriever.retrieve(facts: facts, for: userQuestion)
     }
 
     private func retrieveRelevantKnowledge(for userQuestion: String) -> RetrievedKnowledgeContext {
@@ -583,6 +668,7 @@ public actor InsightEngine {
         turnID: Int,
         userQuestion: String,
         imageDescription: String?,
+        userProfile: UserProfileContext,
         relevantMemory: RelevantMemoryContext,
         retrievedKnowledge: RetrievedKnowledgeContext,
         promptLength: Int
@@ -590,6 +676,7 @@ public actor InsightEngine {
         let llmConfig = configuration.llmConfig
         InsightEngineLog.info("Turn \(turnID) user question: \(userQuestion)")
         InsightEngineLog.info("Turn \(turnID) image description: \(imageDescription ?? "No image provided.")")
+        InsightEngineLog.info("Turn \(turnID) profile used: \(userProfile.promptBlock())")
         InsightEngineLog.info("Turn \(turnID) memory used: \(relevantMemory.promptBlock())")
         InsightEngineLog.info("Turn \(turnID) knowledge used: \(retrievedKnowledge.hits.map(\.recordTitle).joined(separator: ", "))")
         InsightEngineLog.info("Turn \(turnID) final prompt length: \(promptLength) chars.")
@@ -628,78 +715,6 @@ public actor InsightEngine {
         let destination = uploads.appendingPathComponent("photo-\(UUID().uuidString.replacingOccurrences(of: "-", with: "")).\(ext)")
         try FileManager.default.copyItem(at: source, to: destination)
         return destination
-    }
-
-    private enum MemoryCategory {
-        case preference
-        case userFact
-        case pastContext
-    }
-
-    private static func category(forMemoryFact fact: String) -> MemoryCategory {
-        let lower = fact.lowercased()
-        let preferenceMarkers = [
-            "prefers",
-            "preference",
-            "likes",
-            "dislikes",
-            "wants",
-            "answer style",
-            "concise",
-            "brief",
-            "detailed",
-            "units",
-            "metric",
-            "imperial",
-        ]
-        if preferenceMarkers.contains(where: lower.contains) {
-            return .preference
-        }
-
-        let userFactMarkers = [
-            "user is",
-            "user has",
-            "user owns",
-            "user works",
-            "user lives",
-            "my ",
-            "i am",
-            "i have",
-            "i own",
-        ]
-        if userFactMarkers.contains(where: lower.contains) {
-            return .userFact
-        }
-
-        return .pastContext
-    }
-
-    private static func isAnswerStylePreference(_ fact: String) -> Bool {
-        let lower = fact.lowercased()
-        return lower.contains("answer") ||
-            lower.contains("concise") ||
-            lower.contains("brief") ||
-            lower.contains("detailed") ||
-            lower.contains("metric") ||
-            lower.contains("imperial") ||
-            lower.contains("units")
-    }
-
-    private static func keywords(in text: String) -> Set<String> {
-        let stopWords: Set<String> = [
-            "about", "after", "again", "also", "and", "any", "are", "can", "could",
-            "did", "does", "for", "from", "had", "has", "have", "how", "into",
-            "is", "it", "its", "just", "like", "me", "my", "of", "on", "or",
-            "our", "that", "the", "their", "them", "this", "to", "was", "what",
-            "when", "where", "which", "with", "would", "you", "your"
-        ]
-
-        let separators = CharacterSet.alphanumerics.inverted
-        return Set(
-            text.lowercased()
-                .components(separatedBy: separators)
-                .filter { $0.count >= 3 && !stopWords.contains($0) }
-        )
     }
 }
 

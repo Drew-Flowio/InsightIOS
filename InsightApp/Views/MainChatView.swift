@@ -16,7 +16,8 @@ struct MainChatView: View {
                 StatusIndicatorView(
                     state: viewModel.appState,
                     assistantName: viewModel.assistantName,
-                    onOpenMinds: { viewModel.showMindsLibrary = true }
+                    onOpenMinds: { viewModel.showMindsLibrary = true },
+                    onOpenMemory: { viewModel.showMemoryScreen = true }
                 )
 
                 ChatTranscriptView(
@@ -104,6 +105,9 @@ struct MainChatView: View {
         }
         .sheet(isPresented: $viewModel.showMindsLibrary) {
             MindsLibraryView(viewModel: viewModel)
+        }
+        .sheet(isPresented: $viewModel.showMemoryScreen) {
+            MemoryView(viewModel: viewModel)
         }
     }
 

@@ -237,6 +237,47 @@ public final class Repository: @unchecked Sendable {
         execute("UPDATE memory_facts SET active = 0")
     }
 
+    // MARK: - User profile
+
+    public func getUserProfile() -> UserProfileRecord? {
+        queryOne(
+            """
+            SELECT display_name, response_style, general_notes, updated_at
+            FROM user_profile WHERE id = 'default' LIMIT 1
+            """,
+            map: Self.mapUserProfile
+        )
+    }
+
+    @discardableResult
+    public func upsertUserProfile(
+        displayName: String?,
+        responseStyle: String?,
+        generalNotes: String?
+    ) -> UserProfileRecord {
+        let profile = UserProfileRecord(
+            displayName: Self.normalizedOptional(displayName),
+            responseStyle: Self.normalizedOptional(responseStyle),
+            generalNotes: Self.normalizedOptional(generalNotes),
+            updatedAt: Self.now()
+        )
+
+        execute("DELETE FROM user_profile WHERE id = 'default'")
+        execute(
+            """
+            INSERT INTO user_profile (id, display_name, response_style, general_notes, updated_at)
+            VALUES ('default', ?, ?, ?, ?)
+            """,
+            bindings: [
+                profile.displayName.map(SQLValue.text) ?? .null,
+                profile.responseStyle.map(SQLValue.text) ?? .null,
+                profile.generalNotes.map(SQLValue.text) ?? .null,
+                .text(profile.updatedAt),
+            ]
+        )
+        return profile
+    }
+
     // MARK: - Knowledge volumes
 
     public func knowledgeVolumeExists(id: String) -> Bool {
@@ -532,6 +573,21 @@ public final class Repository: @unchecked Sendable {
             createdAt: columnText(statement, 2),
             active: sqlite3_column_int(statement, 3) != 0
         )
+    }
+
+    private static func mapUserProfile(_ statement: OpaquePointer) -> UserProfileRecord {
+        UserProfileRecord(
+            displayName: columnOptionalText(statement, 0),
+            responseStyle: columnOptionalText(statement, 1),
+            generalNotes: columnOptionalText(statement, 2),
+            updatedAt: columnText(statement, 3)
+        )
+    }
+
+    private static func normalizedOptional(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 
     private static func mapKnowledgeVolume(_ statement: OpaquePointer) -> KnowledgeVolumeRecord {

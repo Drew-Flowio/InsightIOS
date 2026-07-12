@@ -165,3 +165,22 @@ public struct MessageKnowledgeSourceRecord: Sendable, Equatable, Identifiable {
         self.excerpt = excerpt
     }
 }
+
+public struct UserProfileRecord: Sendable, Equatable {
+    public let displayName: String?
+    public let responseStyle: String?
+    public let generalNotes: String?
+    public let updatedAt: String
+
+    public init(
+        displayName: String?,
+        responseStyle: String?,
+        generalNotes: String?,
+        updatedAt: String
+    ) {
+        self.displayName = displayName
+        self.responseStyle = responseStyle
+        self.generalNotes = generalNotes
+        self.updatedAt = updatedAt
+    }
+}

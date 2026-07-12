@@ -35,10 +35,15 @@ final class ChatViewModel {
     var showCamera = false
     var showPhotoPicker = false
     var showMindsLibrary = false
+    var showMemoryScreen = false
     var selectedPhotoItem: PhotosPickerItem?
 
     private(set) var minds: [MindLibraryItem] = []
     private(set) var mindsFeedbackMessage: String?
+    private(set) var memoryFacts: [MemoryFactRecord] = []
+    var userProfileName = ""
+    var userProfileStyle = "balanced"
+    var userProfileNotes = ""
     private var voiceSubmissionPending = false
     private var voiceCaptureUsesHold = false
 
@@ -350,6 +355,36 @@ final class ChatViewModel {
 
     func clearMindsFeedback() {
         mindsFeedbackMessage = nil
+    }
+
+    func loadMemory() async {
+        guard let engine else { return }
+        memoryFacts = await engine.listMemoryFacts()
+        let profile = await engine.getUserProfile()
+        userProfileName = profile.displayName ?? ""
+        userProfileStyle = profile.responseStyle ?? "balanced"
+        userProfileNotes = profile.generalNotes ?? ""
+    }
+
+    func saveUserProfile() {
+        guard let engine else { return }
+
+        Task {
+            _ = await engine.updateUserProfile(
+                displayName: userProfileName,
+                responseStyle: userProfileStyle,
+                generalNotes: userProfileNotes
+            )
+        }
+    }
+
+    func deleteMemoryFact(id: String) {
+        guard let engine else { return }
+
+        Task {
+            await engine.removeMemoryFact(factID: id)
+            await loadMemory()
+        }
     }
 
     private func message(for outcome: MindImportOutcome) -> String {

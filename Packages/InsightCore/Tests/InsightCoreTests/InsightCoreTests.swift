@@ -24,6 +24,7 @@ final class InsightCoreTests: XCTestCase {
         XCTAssertEqual(messages[0].role, "system")
         XCTAssertEqual(messages[1].role, "user")
         XCTAssertTrue(messages[0].content.contains("You are Insight"))
+        XCTAssertTrue(messages[0].content.contains("USER PROFILE:"))
         XCTAssertTrue(messages[0].content.contains("IMAGE CONTEXT:"))
         XCTAssertTrue(messages[0].content.contains("RELEVANT USER MEMORY:"))
         XCTAssertTrue(messages[1].content.contains("USER QUESTION:"))
