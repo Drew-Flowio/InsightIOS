@@ -31,6 +31,7 @@ enum InsightTheme {
         case .transcribing: InsightColors.thinking
         case .analyzing: InsightColors.accent
         case .thinking: InsightColors.thinking
+        case .streaming: InsightColors.accent
         case .speaking: InsightColors.success
         case .error: InsightColors.listening
         }
@@ -43,6 +44,7 @@ enum InsightTheme {
         case .transcribing: "Transcribing"
         case .analyzing: "Analyzing"
         case .thinking: "Thinking"
+        case .streaming: "Streaming"
         case .speaking: "Speaking"
         case .error: "Error"
         }

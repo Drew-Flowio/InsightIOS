@@ -16,6 +16,8 @@ public actor SystemSpeechTtsAdapter: TtsServing {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
+        try AudioSessionCoordinator.configureForPlayback()
+
         let utterance = AVSpeechUtterance(string: trimmed)
         utterance.voice = Self.preferredVoice
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.90

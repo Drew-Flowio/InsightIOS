@@ -127,12 +127,7 @@ public actor InsightEngine {
         await setState(.idle, notify: onState)
     }
 
-    @discardableResult
-    public func sendVoiceUtterance(
-        onTranscript: (@Sendable (String) -> Void)? = nil,
-        onToken: (@Sendable (String) -> Void)? = nil,
-        onState: (@Sendable (AppState) -> Void)? = nil
-    ) async throws -> TurnResult? {
+    public func transcribeRecording(onState: (@Sendable (AppState) -> Void)? = nil) async throws -> String? {
         guard let audioURL = try await recorder.stop() else {
             InsightEngineLog.info("Voice flow: recorder returned no audio URL.")
             await setState(.idle, notify: onState)
@@ -146,17 +141,27 @@ public actor InsightEngine {
         InsightEngineLog.info("Voice flow: sending captured audio to REAL Whisper transcription.")
         let transcript = try await stt.transcribe(audioURL: audioURL)
         InsightEngineLog.info("Voice flow: Whisper transcript: \(transcript)")
-        guard !transcript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+
+        let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
             await setState(.idle, notify: onState)
             return nil
         }
 
-        onTranscript?(transcript)
+        await setState(.idle, notify: onState)
+        return trimmed
+    }
 
+    @discardableResult
+    public func sendVoiceMessage(
+        _ text: String,
+        onToken: (@Sendable (String) -> Void)? = nil,
+        onState: (@Sendable (AppState) -> Void)? = nil
+    ) async throws -> TurnResult {
         let result = try await runTurn(
-            utterance: transcript,
+            utterance: text,
             source: "voice",
-            transcript: transcript,
+            transcript: text,
             recordUser: true,
             onToken: onToken,
             onState: onState
@@ -169,6 +174,24 @@ public actor InsightEngine {
 
         await setState(.idle, notify: onState)
         return result
+    }
+
+    @discardableResult
+    public func sendVoiceUtterance(
+        onTranscript: (@Sendable (String) -> Void)? = nil,
+        onToken: (@Sendable (String) -> Void)? = nil,
+        onState: (@Sendable (AppState) -> Void)? = nil
+    ) async throws -> TurnResult? {
+        guard let transcript = try await transcribeRecording(onState: onState) else {
+            return nil
+        }
+
+        onTranscript?(transcript)
+        return try await sendVoiceMessage(
+            transcript,
+            onToken: onToken,
+            onState: onState
+        )
     }
 
     public func speak(_ text: String, onState: (@Sendable (AppState) -> Void)? = nil) async throws {
@@ -394,6 +417,7 @@ public actor InsightEngine {
         let token = cancelToken
         let streamAccumulator = StreamAccumulator()
         let promptFormatter = promptBuilder
+        let streamingFlag = StreamingFlag()
         var rawReplyText = ""
 
         do {
@@ -403,6 +427,10 @@ public actor InsightEngine {
                     guard !token.isCancelled else { return }
                     let cleaned = promptFormatter.sanitizeStreamingToken(piece)
                     guard !cleaned.isEmpty else { return }
+                    if !streamingFlag.value {
+                        streamingFlag.value = true
+                        Task { await self.markStreaming(notify: onState) }
+                    }
                     streamAccumulator.append(cleaned)
                     onToken?(cleaned)
                 },
@@ -536,6 +564,10 @@ public actor InsightEngine {
         handler?(state)
     }
 
+    private func markStreaming(notify handler: (@Sendable (AppState) -> Void)?) async {
+        await setState(.streaming, notify: handler)
+    }
+
     private static func seedInitialPromptIfNeeded(in repository: Repository) throws {
         if repository.getActivePromptVersion() != nil {
             return
@@ -636,6 +668,10 @@ private enum InsightEngineLog {
     static func info(_ message: String) {
         NSLog("[InsightEngine] %@", message)
     }
+}
+
+private final class StreamingFlag: @unchecked Sendable {
+    var value = false
 }
 
 private final class StreamAccumulator: @unchecked Sendable {

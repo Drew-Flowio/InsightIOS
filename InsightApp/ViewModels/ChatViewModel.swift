@@ -37,6 +37,8 @@ final class ChatViewModel {
 
     private(set) var minds: [MindLibraryItem] = []
     private(set) var mindsFeedbackMessage: String?
+    private var voiceSubmissionPending = false
+    private var voiceCaptureUsesHold = false
 
     let assistantName: String
 
@@ -109,6 +111,18 @@ final class ChatViewModel {
         guard !text.isEmpty, let engine else { return }
 
         composerText = ""
+        let useVoiceReply = voiceSubmissionPending
+        voiceSubmissionPending = false
+
+        if useVoiceReply {
+            appendUserMessage(text)
+            haptic(.light)
+            activeTask = Task {
+                await performVoiceReplyTurn(engine: engine, text: text)
+            }
+            return
+        }
+
         appendUserMessage(text)
         haptic(.light)
 
@@ -121,15 +135,33 @@ final class ChatViewModel {
         guard let engine else { return }
 
         if isRecording {
+            voiceCaptureUsesHold = false
             haptic(.medium)
             activeTask = Task {
-                await performVoiceTurn(engine: engine)
+                await finishVoiceCapture(autoSubmit: false)
             }
             return
         }
 
         guard !isBusy else { return }
+        startVoiceRecording(engine: engine)
+    }
 
+    func beginHoldToTalk() {
+        guard let engine, !isRecording, !isBusy else { return }
+        voiceCaptureUsesHold = true
+        startVoiceRecording(engine: engine)
+    }
+
+    func endHoldToTalk() {
+        guard isRecording, voiceCaptureUsesHold else { return }
+        haptic(.medium)
+        activeTask = Task {
+            await finishVoiceCapture(autoSubmit: true)
+        }
+    }
+
+    private func startVoiceRecording(engine: InsightEngine) {
         activeTask = Task {
             do {
                 try await engine.startRecording { [weak self] state in
@@ -138,8 +170,45 @@ final class ChatViewModel {
                 isRecording = true
                 haptic(.soft)
             } catch {
-                errorMessage = error.localizedDescription
+                handleVoiceError(error)
             }
+            activeTask = nil
+        }
+    }
+
+    private func finishVoiceCapture(autoSubmit: Bool) async {
+        guard let engine else { return }
+        isRecording = false
+        voiceCaptureUsesHold = false
+
+        do {
+            guard let transcript = try await engine.transcribeRecording(onState: voiceStateHandler) else {
+                return
+            }
+
+            composerText = transcript
+            voiceSubmissionPending = true
+
+            if autoSubmit {
+                sendMessage()
+            }
+        } catch {
+            handleVoiceError(error)
+        }
+        activeTask = nil
+    }
+
+    private func handleVoiceError(_ error: Error) {
+        isRecording = false
+        voiceCaptureUsesHold = false
+        voiceSubmissionPending = false
+        appState = .error
+        errorMessage = error.localizedDescription
+    }
+
+    private var voiceStateHandler: @Sendable (AppState) -> Void {
+        { [weak self] state in
+            Task { @MainActor in self?.appState = state }
         }
     }
 
@@ -212,9 +281,11 @@ final class ChatViewModel {
         Task {
             await engine.cancelCurrent()
             if isRecording {
-                try? await engine.cancelRecording()
+                try? await engine.cancelRecording(onState: voiceStateHandler)
                 isRecording = false
             }
+            voiceSubmissionPending = false
+            voiceCaptureUsesHold = false
             if let streamingMessageID {
                 finalizeStreamingMessage(id: streamingMessageID)
             }
@@ -224,6 +295,9 @@ final class ChatViewModel {
 
     func clearError() {
         errorMessage = nil
+        if appState == .error {
+            appState = .idle
+        }
     }
 
     func loadMinds() async {
@@ -351,39 +425,28 @@ final class ChatViewModel {
         activeTask = nil
     }
 
-    private func performVoiceTurn(engine: InsightEngine) async {
-        isRecording = false
+    private func performVoiceReplyTurn(engine: InsightEngine, text: String) async {
         let streamID = UUID().uuidString
         messages.append(ChatDisplayMessage(id: streamID, role: .assistant, content: "", isStreaming: true))
         streamingMessageID = streamID
+
         do {
-            let result = try await engine.sendVoiceUtterance(
-                onTranscript: { [weak self] transcript in
-                    Task { @MainActor in self?.appendUserMessage(transcript) }
-                },
+            _ = try await engine.sendVoiceMessage(
+                text,
                 onToken: { [weak self] token in
                     Task { @MainActor in
                         self?.appendStreamingToken(id: streamID, token: token)
                     }
                 },
-                onState: { [weak self] state in
-                    Task { @MainActor in self?.appState = state }
-                }
+                onState: voiceStateHandler
             )
-
-            if result != nil {
-                finalizeStreamingMessage(id: streamID)
-                await reloadHistory(from: engine)
-                haptic(.success)
-            } else {
-                messages.removeAll { $0.id == streamID }
-                streamingMessageID = nil
-            }
+            finalizeStreamingMessage(id: streamID)
+            await reloadHistory(from: engine)
+            haptic(.success)
         } catch {
-            errorMessage = error.localizedDescription
+            handleVoiceError(error)
             messages.removeAll { $0.id == streamID }
             streamingMessageID = nil
-            appState = .idle
         }
         activeTask = nil
     }

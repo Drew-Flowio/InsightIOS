@@ -29,6 +29,7 @@ public actor MicrophoneRecorder: AudioRecording {
     private let config: AudioRuntimeConfig
     private var recorder: AVAudioRecorder?
     private var outputURL: URL?
+    private var maxDurationTask: Task<Void, Never>?
     public private(set) var isRecording = false
 
     public init(config: AudioRuntimeConfig = AudioRuntimeConfig()) {
@@ -41,7 +42,7 @@ public actor MicrophoneRecorder: AudioRecording {
             throw VoiceRuntimeError.microphonePermissionDenied
         }
 
-        try configureAudioSession()
+        try AudioSessionCoordinator.configureForRecording()
 
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("insight-recording-\(UUID().uuidString).wav")
@@ -64,9 +65,12 @@ public actor MicrophoneRecorder: AudioRecording {
         recorder = audioRecorder
         outputURL = url
         isRecording = true
+        scheduleMaxDurationStop()
     }
 
     public func cancel() async {
+        maxDurationTask?.cancel()
+        maxDurationTask = nil
         recorder?.stop()
         if let outputURL {
             try? FileManager.default.removeItem(at: outputURL)
@@ -77,6 +81,8 @@ public actor MicrophoneRecorder: AudioRecording {
     }
 
     public func stop() async throws -> URL? {
+        maxDurationTask?.cancel()
+        maxDurationTask = nil
         guard isRecording else { return nil }
         recorder?.stop()
         isRecording = false
@@ -84,6 +90,17 @@ public actor MicrophoneRecorder: AudioRecording {
         recorder = nil
         outputURL = nil
         return url
+    }
+
+    private func scheduleMaxDurationStop() {
+        let seconds = config.maxRecordingSeconds
+        guard seconds > 0 else { return }
+
+        maxDurationTask = Task {
+            try? await Task.sleep(for: .seconds(seconds))
+            guard !Task.isCancelled, isRecording else { return }
+            _ = try? await stop()
+        }
     }
 
     private static func requestMicrophoneAccess() async -> Bool {
@@ -99,14 +116,6 @@ public actor MicrophoneRecorder: AudioRecording {
                 continuation.resume(returning: granted)
             }
         }
-#endif
-    }
-
-    private func configureAudioSession() throws {
-#if os(iOS)
-        let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetooth])
-        try session.setActive(true)
 #endif
     }
 }

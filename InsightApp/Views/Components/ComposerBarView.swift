@@ -1,13 +1,17 @@
 import SwiftUI
+import InsightCore
 
 struct ComposerBarView: View {
     @Binding var text: String
     let placeholder: String
+    let appState: AppState
     let isBusy: Bool
     let isRecording: Bool
     let canSend: Bool
     let onSend: () -> Void
-    let onVoice: () -> Void
+    let onVoiceTap: () -> Void
+    let onVoiceHoldStart: () -> Void
+    let onVoiceHoldEnd: () -> Void
     let onTakePhoto: () -> Void
     let onSelectPhoto: () -> Void
     let onStop: () -> Void
@@ -74,27 +78,67 @@ struct ComposerBarView: View {
     }
 
     private var voiceButton: some View {
-        Button(action: onVoice) {
-            ZStack {
-                if isRecording {
-                    Circle()
-                        .stroke(InsightColors.listening.opacity(0.35), lineWidth: 3)
-                        .frame(width: InsightSpacing.minTouchTarget + 8, height: InsightSpacing.minTouchTarget + 8)
-                        .scaleEffect(isRecording ? 1.08 : 1)
-                        .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: isRecording)
-                }
+        Image(systemName: isRecording ? "stop.fill" : "mic.fill")
+            .font(.system(size: 18, weight: .semibold))
+            .frame(width: InsightSpacing.minTouchTarget, height: InsightSpacing.minTouchTarget)
+            .background {
+                ZStack {
+                    if isRecording {
+                        Circle()
+                            .stroke(InsightColors.listening.opacity(0.35), lineWidth: 3)
+                            .frame(width: InsightSpacing.minTouchTarget + 8, height: InsightSpacing.minTouchTarget + 8)
+                            .scaleEffect(isRecording ? 1.08 : 1)
+                            .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: isRecording)
+                    }
 
-                Image(systemName: isRecording ? "stop.fill" : "mic.fill")
-                    .font(.system(size: 18, weight: .semibold))
+                    Circle()
+                        .fill(isRecording ? AnyShapeStyle(InsightColors.listening) : AnyShapeStyle(InsightColors.surfaceElevated))
+                        .overlay {
+                            Circle()
+                                .strokeBorder(isRecording ? Color.clear : InsightColors.border, lineWidth: 1)
+                        }
+                        .shadow(color: isRecording ? InsightColors.listening.opacity(0.35) : .clear, radius: 12, y: 4)
+                }
             }
+            .foregroundStyle(isRecording ? .white : InsightColors.textPrimary)
+            .contentShape(Circle())
+            .onTapGesture(perform: onVoiceTap)
+            .onLongPressGesture(minimumDuration: 0.25, pressing: { isPressing in
+                if isPressing {
+                    onVoiceHoldStart()
+                } else {
+                    onVoiceHoldEnd()
+                }
+            }, perform: {})
+            .disabled(isBusy && !isRecording)
+            .accessibilityLabel(isRecording ? "Stop recording" : "Start voice message")
+    }
+
+    private var stopBar: some View {
+        HStack {
+            StreamingIndicatorView()
+
+            Text(stopBarLabel)
+                .font(InsightTypography.caption())
+                .foregroundStyle(InsightColors.textSecondary)
+
+            Spacer()
+
+            Button("Stop", action: onStop)
+                .buttonStyle(InsightSecondaryButtonStyle())
         }
-        .buttonStyle(InsightIconButtonStyle(
-            tint: isRecording ? .white : InsightColors.textPrimary,
-            background: isRecording ? InsightColors.listening : InsightColors.surfaceElevated,
-            isProminent: isRecording
-        ))
-        .disabled(isBusy && !isRecording)
-        .accessibilityLabel(isRecording ? "Stop recording" : "Start voice message")
+        .padding(.horizontal, InsightSpacing.xs)
+    }
+
+    private var stopBarLabel: String {
+        switch appState {
+        case .listening: "Listening…"
+        case .transcribing: "Transcribing…"
+        case .thinking: "Thinking…"
+        case .streaming: "Streaming reply…"
+        case .speaking: "Speaking…"
+        default: "Insight is working…"
+        }
     }
 
     private var sendButton: some View {
@@ -106,22 +150,6 @@ struct ComposerBarView: View {
         .buttonStyle(InsightIconButtonStyle(isProminent: true))
         .disabled(!canSend)
         .accessibilityLabel("Send message")
-    }
-
-    private var stopBar: some View {
-        HStack {
-            StreamingIndicatorView()
-
-            Text("Insight is working…")
-                .font(InsightTypography.caption())
-                .foregroundStyle(InsightColors.textSecondary)
-
-            Spacer()
-
-            Button("Stop", action: onStop)
-                .buttonStyle(InsightSecondaryButtonStyle())
-        }
-        .padding(.horizontal, InsightSpacing.xs)
     }
 }
 
@@ -154,11 +182,14 @@ private struct ComposerBackground: View {
                 ComposerBarView(
                     text: $text,
                     placeholder: "Ask Insight anything…",
+                    appState: .idle,
                     isBusy: false,
                     isRecording: false,
                     canSend: !text.isEmpty,
                     onSend: {},
-                    onVoice: {},
+                    onVoiceTap: {},
+                    onVoiceHoldStart: {},
+                    onVoiceHoldEnd: {},
                     onTakePhoto: {},
                     onSelectPhoto: {},
                     onStop: {}

@@ -37,11 +37,14 @@ struct MainChatView: View {
                 ComposerBarView(
                     text: $viewModel.composerText,
                     placeholder: "Ask \(viewModel.assistantName) anything…",
+                    appState: viewModel.appState,
                     isBusy: viewModel.isBusy,
                     isRecording: viewModel.isRecording,
                     canSend: viewModel.canSend,
                     onSend: viewModel.sendMessage,
-                    onVoice: viewModel.toggleVoice,
+                    onVoiceTap: viewModel.toggleVoice,
+                    onVoiceHoldStart: viewModel.beginHoldToTalk,
+                    onVoiceHoldEnd: viewModel.endHoldToTalk,
                     onTakePhoto: { viewModel.showCamera = true },
                     onSelectPhoto: { viewModel.showPhotoPicker = true },
                     onStop: viewModel.cancelCurrent
