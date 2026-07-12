@@ -370,10 +370,14 @@ final class ChatViewModel {
 
     private func reloadHistory(from engine: InsightEngine) async {
         let records = await engine.getHistory()
-        messages = records.compactMap(mapRecord)
+        let sourcesByMessage = await engine.getKnowledgeSourcesByMessageID()
+        messages = records.compactMap { mapRecord($0, sourcesByMessage: sourcesByMessage) }
     }
 
-    private func mapRecord(_ record: MessageRecord) -> ChatDisplayMessage? {
+    private func mapRecord(
+        _ record: MessageRecord,
+        sourcesByMessage: [String: [KnowledgeSourceAttribution]]
+    ) -> ChatDisplayMessage? {
         switch record.role {
         case "user":
             if record.content.hasPrefix("📷 Photo attached") {
@@ -393,11 +397,20 @@ final class ChatViewModel {
                 timestamp: parseTimestamp(record.timestamp)
             )
         case "assistant":
+            let sources = (sourcesByMessage[record.id] ?? []).map {
+                KnowledgeSourceDisplay(
+                    id: $0.id,
+                    volumeTitle: $0.volumeTitle,
+                    recordTitle: $0.recordTitle,
+                    excerpt: $0.excerpt
+                )
+            }
             return ChatDisplayMessage(
                 id: record.id,
                 role: .assistant,
                 content: record.content,
-                timestamp: parseTimestamp(record.timestamp)
+                timestamp: parseTimestamp(record.timestamp),
+                knowledgeSources: sources
             )
         default:
             return nil

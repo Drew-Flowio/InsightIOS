@@ -52,6 +52,7 @@ public struct TurnResult: Sendable {
     public let promptVersionID: String?
     public let assembledPromptDebug: String
     public let imageCaption: String?
+    public let knowledgeSources: [KnowledgeSourceAttribution]
 
     public init(
         transcript: String? = nil,
@@ -60,7 +61,8 @@ public struct TurnResult: Sendable {
         latencyMs: Int,
         promptVersionID: String?,
         assembledPromptDebug: String = "",
-        imageCaption: String? = nil
+        imageCaption: String? = nil,
+        knowledgeSources: [KnowledgeSourceAttribution] = []
     ) {
         self.transcript = transcript
         self.replyText = replyText
@@ -69,6 +71,7 @@ public struct TurnResult: Sendable {
         self.promptVersionID = promptVersionID
         self.assembledPromptDebug = assembledPromptDebug
         self.imageCaption = imageCaption
+        self.knowledgeSources = knowledgeSources
     }
 }
 

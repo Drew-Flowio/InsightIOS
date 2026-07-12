@@ -1,0 +1,29 @@
+{
+  "formatVersion": 1,
+  "volume": {
+    "id": "mind.florida-coastal-demo",
+    "title": "Florida Coastal",
+    "summary": "Coastal boating and outboard troubleshooting reference for Florida waters.",
+    "tags": ["coastal", "boating", "florida", "outboard", "marine"]
+  },
+  "records": [
+    {
+      "id": "outboard.telltale.weak-stream",
+      "title": "Weak or intermittent telltale stream",
+      "content": "A healthy outboard telltale should produce a steady, strong stream of cooling water shortly after start. A weak, intermittent, or dry telltale often indicates restricted raw-water flow before the engine overheats. Common causes include a clogged telltale nipple, debris in the water pump impeller housing, kinked or collapsed hose, or a failing impeller. Check whether the stream improves briefly after throttle blips. Do not run the engine hard without confirming cooling flow. Inspect the telltale outlet first, then verify impeller age and housing condition if the stream stays weak.",
+      "tags": ["outboard", "cooling", "telltale", "overheat", "impeller"]
+    },
+    {
+      "id": "outboard.fuel.phase-separation",
+      "title": "Suspected fuel phase separation after storage",
+      "content": "Ethanol-blended fuel can absorb water and separate after long idle periods in humid coastal climates. Symptoms include hard starting, sputtering under load, or sudden power loss. Inspect the fuel bowl or filter bowl for cloudy separation layers when safe to do so. Replace contaminated fuel, inspect filters, and stabilize fuel before storage. Avoid running the engine hard until clean fuel is confirmed.",
+      "tags": ["outboard", "fuel", "ethanol", "starting", "storage"]
+    },
+    {
+      "id": "trailering.coastal.rinse",
+      "title": "Post-saltwater rinse checklist",
+      "content": "After coastal use, flush the outboard cooling system, rinse external fittings, and inspect the trailer bunks or rollers for salt buildup. Salt accelerates corrosion on electrical connectors and trailer bearings. A quick freshwater flush reduces long-term maintenance on both engine and trailer.",
+      "tags": ["coastal", "maintenance", "trailer", "corrosion", "rinse"]
+    }
+  ]
+}

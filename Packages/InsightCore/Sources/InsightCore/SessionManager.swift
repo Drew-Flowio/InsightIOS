@@ -32,9 +32,10 @@ public struct SessionManager: Sendable {
         text: String,
         promptVersionID: String?,
         latencyMs: Int,
-        cancelled: Bool = false
+        cancelled: Bool = false,
+        knowledgeSources: [KnowledgeSourceAttribution] = []
     ) -> MessageRecord {
-        repository.addMessage(
+        let message = repository.addMessage(
             sessionID: currentSession.id,
             role: "assistant",
             content: text,
@@ -43,6 +44,23 @@ public struct SessionManager: Sendable {
             latencyMs: latencyMs,
             cancelled: cancelled
         )
+
+        if !knowledgeSources.isEmpty {
+            repository.addMessageKnowledgeSources(
+                messageID: message.id,
+                sources: knowledgeSources.map {
+                    (
+                        volumeID: $0.volumeID,
+                        volumeTitle: $0.volumeTitle,
+                        recordID: $0.recordID,
+                        recordTitle: $0.recordTitle,
+                        excerpt: $0.excerpt
+                    )
+                }
+            )
+        }
+
+        return message
     }
 
     public func getAllMessages() -> [MessageRecord] {

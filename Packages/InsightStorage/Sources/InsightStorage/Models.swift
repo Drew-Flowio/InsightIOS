@@ -77,3 +77,75 @@ public struct MemoryFactRecord: Sendable, Equatable, Identifiable {
         self.active = active
     }
 }
+
+public struct KnowledgeVolumeRecord: Sendable, Equatable, Identifiable {
+    public let id: String
+    public let title: String
+    public let summary: String?
+    public let tags: [String]
+    public let sourceLabel: String?
+    public let isEnabled: Bool
+    public let installedAt: String
+
+    public init(
+        id: String,
+        title: String,
+        summary: String?,
+        tags: [String],
+        sourceLabel: String?,
+        isEnabled: Bool,
+        installedAt: String
+    ) {
+        self.id = id
+        self.title = title
+        self.summary = summary
+        self.tags = tags
+        self.sourceLabel = sourceLabel
+        self.isEnabled = isEnabled
+        self.installedAt = installedAt
+    }
+}
+
+public struct StoredKnowledgeRecord: Sendable, Equatable, Identifiable {
+    public let id: String
+    public let volumeID: String
+    public let title: String
+    public let content: String
+    public let tags: [String]
+
+    public init(id: String, volumeID: String, title: String, content: String, tags: [String]) {
+        self.id = id
+        self.volumeID = volumeID
+        self.title = title
+        self.content = content
+        self.tags = tags
+    }
+}
+
+public struct MessageKnowledgeSourceRecord: Sendable, Equatable, Identifiable {
+    public let id: String
+    public let messageID: String
+    public let volumeID: String
+    public let volumeTitle: String
+    public let recordID: String
+    public let recordTitle: String
+    public let excerpt: String
+
+    public init(
+        id: String,
+        messageID: String,
+        volumeID: String,
+        volumeTitle: String,
+        recordID: String,
+        recordTitle: String,
+        excerpt: String
+    ) {
+        self.id = id
+        self.messageID = messageID
+        self.volumeID = volumeID
+        self.volumeTitle = volumeTitle
+        self.recordID = recordID
+        self.recordTitle = recordTitle
+        self.excerpt = excerpt
+    }
+}

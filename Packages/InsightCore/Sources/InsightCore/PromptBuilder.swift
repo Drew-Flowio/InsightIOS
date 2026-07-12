@@ -44,6 +44,7 @@ public struct AgentPromptInput: Sendable, Equatable {
     public let userQuestion: String
     public let imageDescription: String?
     public let relevantMemory: RelevantMemoryContext
+    public let retrievedKnowledge: RetrievedKnowledgeContext
     public let recentConversation: String?
     public let timestamp: Date
     public let currentMode: String?
@@ -52,6 +53,7 @@ public struct AgentPromptInput: Sendable, Equatable {
         userQuestion: String,
         imageDescription: String?,
         relevantMemory: RelevantMemoryContext,
+        retrievedKnowledge: RetrievedKnowledgeContext = RetrievedKnowledgeContext(),
         recentConversation: String?,
         timestamp: Date = Date(),
         currentMode: String? = nil
@@ -59,6 +61,7 @@ public struct AgentPromptInput: Sendable, Equatable {
         self.userQuestion = userQuestion
         self.imageDescription = imageDescription
         self.relevantMemory = relevantMemory
+        self.retrievedKnowledge = retrievedKnowledge
         self.recentConversation = recentConversation
         self.timestamp = timestamp
         self.currentMode = currentMode
@@ -87,6 +90,7 @@ public struct PromptBuilder: Sendable {
     ) -> (messages: [ChatMessage], debugText: String) {
         let imageBlock = cleanBlock(input.imageDescription) ?? "No image provided."
         let memoryBlock = input.relevantMemory.promptBlock()
+        let knowledgeBlock = input.retrievedKnowledge.promptBlock()
         let conversationBlock = cleanBlock(input.recentConversation) ?? "No relevant recent context."
         let timestamp = ISO8601DateFormatter().string(from: input.timestamp)
         let mode = cleanBlock(input.currentMode) ?? "Not specified."
@@ -105,12 +109,16 @@ public struct PromptBuilder: Sendable {
         RELEVANT USER MEMORY:
         \(memoryBlock)
 
+        KNOWLEDGE VOLUME RECORDS:
+        \(knowledgeBlock)
+
         RECENT CONVERSATION:
         \(conversationBlock)
 
         WHILE ANSWERING THIS TURN:
         - Use the image description as evidence, not imagination.
-        - Use memory only when it helps.
+        - Use user memory only when it helps the current question.
+        - Use knowledge volume records as reference material when relevant; do not invent facts beyond them.
         - Answer the question directly first, then give practical next steps.
         - If the image is unclear, say what would confirm it.
         - Ask at most one follow-up question if needed.

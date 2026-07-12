@@ -3,6 +3,7 @@ import SwiftUI
 struct ChatBubbleView: View {
     let message: ChatDisplayMessage
     let assistantName: String
+    @State private var showsSources = false
 
     var body: some View {
         HStack(alignment: .bottom, spacing: InsightSpacing.xs) {
@@ -68,6 +69,10 @@ struct ChatBubbleView: View {
                     StreamingIndicatorView()
                     streamingCursor
                 }
+            }
+
+            if message.isAssistant, !message.knowledgeSources.isEmpty {
+                KnowledgeSourcesSection(sources: message.knowledgeSources, isExpanded: $showsSources)
             }
         }
         .padding(.horizontal, InsightSpacing.md)

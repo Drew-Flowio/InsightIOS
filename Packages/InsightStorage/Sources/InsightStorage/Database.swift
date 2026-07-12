@@ -39,6 +39,38 @@ enum Database {
 
     CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id, ts);
     CREATE INDEX IF NOT EXISTS idx_prompt_versions_active ON prompt_versions(is_active);
+
+    CREATE TABLE IF NOT EXISTS knowledge_volumes (
+        id              TEXT PRIMARY KEY,
+        title           TEXT NOT NULL,
+        summary         TEXT,
+        tags_json       TEXT NOT NULL DEFAULT '[]',
+        source_label    TEXT,
+        is_enabled      INTEGER NOT NULL DEFAULT 1,
+        installed_at    TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS knowledge_records (
+        id              TEXT NOT NULL,
+        volume_id       TEXT NOT NULL REFERENCES knowledge_volumes(id) ON DELETE CASCADE,
+        title           TEXT NOT NULL,
+        content         TEXT NOT NULL,
+        tags_json       TEXT NOT NULL DEFAULT '[]',
+        PRIMARY KEY (volume_id, id)
+    );
+
+    CREATE TABLE IF NOT EXISTS message_knowledge_sources (
+        id              TEXT PRIMARY KEY,
+        message_id      TEXT NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+        volume_id       TEXT NOT NULL,
+        volume_title    TEXT NOT NULL,
+        record_id       TEXT NOT NULL,
+        record_title    TEXT NOT NULL,
+        excerpt         TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_knowledge_records_volume ON knowledge_records(volume_id);
+    CREATE INDEX IF NOT EXISTS idx_message_knowledge_sources_message ON message_knowledge_sources(message_id);
     """
 
     static func open(at path: String) throws -> OpaquePointer {

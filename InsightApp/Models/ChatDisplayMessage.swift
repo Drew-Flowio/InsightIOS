@@ -6,6 +6,13 @@ enum ChatMessageRole: String, Sendable {
     case photo
 }
 
+struct KnowledgeSourceDisplay: Identifiable, Equatable, Sendable {
+    let id: String
+    let volumeTitle: String
+    let recordTitle: String
+    let excerpt: String
+}
+
 struct ChatDisplayMessage: Identifiable, Equatable, Sendable {
     let id: String
     let role: ChatMessageRole
@@ -13,6 +20,7 @@ struct ChatDisplayMessage: Identifiable, Equatable, Sendable {
     let timestamp: Date
     var isStreaming: Bool
     var imageURL: URL?
+    var knowledgeSources: [KnowledgeSourceDisplay]
 
     init(
         id: String = UUID().uuidString,
@@ -20,7 +28,8 @@ struct ChatDisplayMessage: Identifiable, Equatable, Sendable {
         content: String,
         timestamp: Date = Date(),
         isStreaming: Bool = false,
-        imageURL: URL? = nil
+        imageURL: URL? = nil,
+        knowledgeSources: [KnowledgeSourceDisplay] = []
     ) {
         self.id = id
         self.role = role
@@ -28,6 +37,7 @@ struct ChatDisplayMessage: Identifiable, Equatable, Sendable {
         self.timestamp = timestamp
         self.isStreaming = isStreaming
         self.imageURL = imageURL
+        self.knowledgeSources = knowledgeSources
     }
 
     var isUser: Bool { role == .user }

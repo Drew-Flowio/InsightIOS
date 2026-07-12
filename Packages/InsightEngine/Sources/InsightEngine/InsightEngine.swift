@@ -9,6 +9,7 @@ public actor InsightEngine {
     private let repository: Repository
     private var sessionManager: SessionManager
     private let promptBuilder = PromptBuilder()
+    private let knowledgeRetriever = KnowledgeRetriever()
 
     private let llm: any LlmServing
     private let stt: any SttServing
@@ -52,6 +53,7 @@ public actor InsightEngine {
         InsightEngineLog.info(services.llmBackendDebugDescription)
 
         try Self.seedInitialPromptIfNeeded(in: repository)
+        MindBootstrap.seedBundledMindsIfNeeded(in: repository)
     }
 
     public var isMockMode: Bool {
@@ -262,6 +264,30 @@ public actor InsightEngine {
         sessionManager.getAllMessages()
     }
 
+    public func getKnowledgeSourcesByMessageID() -> [String: [KnowledgeSourceAttribution]] {
+        let rows = repository.listMessageKnowledgeSources(forSession: sessionManager.currentSession.id)
+        var grouped: [String: [KnowledgeSourceAttribution]] = [:]
+        for row in rows {
+            let source = KnowledgeSourceAttribution(
+                volumeID: row.volumeID,
+                volumeTitle: row.volumeTitle,
+                recordID: row.recordID,
+                recordTitle: row.recordTitle,
+                excerpt: row.excerpt
+            )
+            grouped[row.messageID, default: []].append(source)
+        }
+        return grouped
+    }
+
+    public func listInstalledMinds() -> [KnowledgeVolumeRecord] {
+        repository.listKnowledgeVolumes()
+    }
+
+    public func listEnabledMinds() -> [KnowledgeVolumeRecord] {
+        repository.listEnabledKnowledgeVolumes()
+    }
+
     public func resetMemory(scope: ResetScope = .session) async {
         sessionManager.reset(clearMemoryFacts: scope == .all)
         visualContext = nil
@@ -306,6 +332,7 @@ public actor InsightEngine {
         let activePrompt = repository.getActivePromptVersion()
         let personalityPrompt = activePrompt?.content ?? DefaultPrompts.bundledSystemPrompt()
         let relevantMemory = retrieveRelevantMemory(for: utterance)
+        let retrievedKnowledge = retrieveRelevantKnowledge(for: utterance)
         let (historyMessages, summaryNote) = sessionManager.getPromptHistoryMessages()
         let recentConversation = promptBuilder.summarizeConversation(
             historyMessages: historyMessages,
@@ -317,6 +344,7 @@ public actor InsightEngine {
                 userQuestion: utterance,
                 imageDescription: visualContext?.caption,
                 relevantMemory: relevantMemory,
+                retrievedKnowledge: retrievedKnowledge,
                 recentConversation: recentConversation,
                 timestamp: Date(),
                 currentMode: source
@@ -329,6 +357,7 @@ public actor InsightEngine {
             userQuestion: utterance,
             imageDescription: visualContext?.caption,
             relevantMemory: relevantMemory,
+            retrievedKnowledge: retrievedKnowledge,
             promptLength: debugText.count
         )
 
@@ -385,7 +414,8 @@ public actor InsightEngine {
             text: replyText.isEmpty ? "(cancelled before any reply was generated)" : replyText,
             promptVersionID: activePrompt?.id,
             latencyMs: latencyMs,
-            cancelled: cancelled
+            cancelled: cancelled,
+            knowledgeSources: retrievedKnowledge.hits
         )
         InsightEngineLog.info("Turn \(turnID) assistant message persisted after \(latencyMs) ms.")
 
@@ -396,7 +426,8 @@ public actor InsightEngine {
             latencyMs: latencyMs,
             promptVersionID: activePrompt?.id,
             assembledPromptDebug: debugText,
-            imageCaption: visualContext?.caption
+            imageCaption: visualContext?.caption,
+            knowledgeSources: retrievedKnowledge.hits
         )
         InsightEngineLog.info("Turn \(turnID) result built; returning to caller.")
         return result
@@ -455,17 +486,24 @@ public actor InsightEngine {
         )
     }
 
+    private func retrieveRelevantKnowledge(for userQuestion: String) -> RetrievedKnowledgeContext {
+        let volumes = MindBootstrap.enabledVolumes(from: repository)
+        return knowledgeRetriever.retrieve(query: userQuestion, volumes: volumes)
+    }
+
     private func logAgentDebug(
         turnID: Int,
         userQuestion: String,
         imageDescription: String?,
         relevantMemory: RelevantMemoryContext,
+        retrievedKnowledge: RetrievedKnowledgeContext,
         promptLength: Int
     ) {
         let llmConfig = configuration.llmConfig
         InsightEngineLog.info("Turn \(turnID) user question: \(userQuestion)")
         InsightEngineLog.info("Turn \(turnID) image description: \(imageDescription ?? "No image provided.")")
         InsightEngineLog.info("Turn \(turnID) memory used: \(relevantMemory.promptBlock())")
+        InsightEngineLog.info("Turn \(turnID) knowledge used: \(retrievedKnowledge.hits.map(\.recordTitle).joined(separator: ", "))")
         InsightEngineLog.info("Turn \(turnID) final prompt length: \(promptLength) chars.")
         InsightEngineLog.info(
             "Turn \(turnID) model settings: model=\(llmConfig.modelFileName), context=\(llmConfig.contextLength), maxTokens=\(llmConfig.maxTokens), temperature=\(llmConfig.temperature), topP=\(llmConfig.topP), topK=\(llmConfig.topK), repeatPenalty=\(llmConfig.repeatPenalty)."

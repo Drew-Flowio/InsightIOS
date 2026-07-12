@@ -231,6 +231,167 @@ public final class Repository: @unchecked Sendable {
         execute("UPDATE memory_facts SET active = 0")
     }
 
+    // MARK: - Knowledge volumes
+
+    public func knowledgeVolumeExists(id: String) -> Bool {
+        queryOne(
+            "SELECT 1 FROM knowledge_volumes WHERE id = ? LIMIT 1",
+            bindings: [.text(id)],
+            map: { _ in true }
+        ) != nil
+    }
+
+    @discardableResult
+    public func installKnowledgeVolume(
+        id: String,
+        title: String,
+        summary: String?,
+        tags: [String],
+        sourceLabel: String?,
+        records: [(id: String, title: String, content: String, tags: [String])],
+        enabled: Bool = true
+    ) -> KnowledgeVolumeRecord {
+        let volume = KnowledgeVolumeRecord(
+            id: id,
+            title: title,
+            summary: summary,
+            tags: tags,
+            sourceLabel: sourceLabel,
+            isEnabled: enabled,
+            installedAt: Self.now()
+        )
+
+        execute("DELETE FROM knowledge_records WHERE volume_id = ?", bindings: [.text(id)])
+        execute("DELETE FROM knowledge_volumes WHERE id = ?", bindings: [.text(id)])
+
+        execute(
+            """
+            INSERT INTO knowledge_volumes (id, title, summary, tags_json, source_label, is_enabled, installed_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            bindings: [
+                .text(volume.id),
+                .text(volume.title),
+                volume.summary.map(SQLValue.text) ?? .null,
+                .text(Self.encodeJSON(tags)),
+                sourceLabel.map(SQLValue.text) ?? .null,
+                .int(enabled ? 1 : 0),
+                .text(volume.installedAt),
+            ]
+        )
+
+        for record in records {
+            execute(
+                """
+                INSERT INTO knowledge_records (id, volume_id, title, content, tags_json)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                bindings: [
+                    .text(record.id),
+                    .text(id),
+                    .text(record.title),
+                    .text(record.content),
+                    .text(Self.encodeJSON(record.tags)),
+                ]
+            )
+        }
+
+        return volume
+    }
+
+    public func listKnowledgeVolumes() -> [KnowledgeVolumeRecord] {
+        queryMany(
+            """
+            SELECT id, title, summary, tags_json, source_label, is_enabled, installed_at
+            FROM knowledge_volumes ORDER BY installed_at ASC
+            """,
+            map: Self.mapKnowledgeVolume
+        )
+    }
+
+    public func listEnabledKnowledgeVolumes() -> [KnowledgeVolumeRecord] {
+        queryMany(
+            """
+            SELECT id, title, summary, tags_json, source_label, is_enabled, installed_at
+            FROM knowledge_volumes WHERE is_enabled = 1 ORDER BY installed_at ASC
+            """,
+            map: Self.mapKnowledgeVolume
+        )
+    }
+
+    public func setKnowledgeVolumeEnabled(id: String, enabled: Bool) {
+        execute(
+            "UPDATE knowledge_volumes SET is_enabled = ? WHERE id = ?",
+            bindings: [.int(enabled ? 1 : 0), .text(id)]
+        )
+    }
+
+    public func listKnowledgeRecords(volumeID: String) -> [StoredKnowledgeRecord] {
+        queryMany(
+            """
+            SELECT id, volume_id, title, content, tags_json
+            FROM knowledge_records WHERE volume_id = ? ORDER BY title ASC
+            """,
+            bindings: [.text(volumeID)],
+            map: Self.mapKnowledgeRecord
+        )
+    }
+
+    public func enabledKnowledgeVolumesWithRecords() -> [(KnowledgeVolumeRecord, [StoredKnowledgeRecord])] {
+        listEnabledKnowledgeVolumes().map { volume in
+            (volume, listKnowledgeRecords(volumeID: volume.id))
+        }
+    }
+
+    public func addMessageKnowledgeSources(
+        messageID: String,
+        sources: [(volumeID: String, volumeTitle: String, recordID: String, recordTitle: String, excerpt: String)]
+    ) {
+        for source in sources {
+            execute(
+                """
+                INSERT INTO message_knowledge_sources
+                (id, message_id, volume_id, volume_title, record_id, record_title, excerpt)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                bindings: [
+                    .text(Self.newID()),
+                    .text(messageID),
+                    .text(source.volumeID),
+                    .text(source.volumeTitle),
+                    .text(source.recordID),
+                    .text(source.recordTitle),
+                    .text(source.excerpt),
+                ]
+            )
+        }
+    }
+
+    public func listMessageKnowledgeSources(messageID: String) -> [MessageKnowledgeSourceRecord] {
+        queryMany(
+            """
+            SELECT id, message_id, volume_id, volume_title, record_id, record_title, excerpt
+            FROM message_knowledge_sources WHERE message_id = ? ORDER BY record_title ASC
+            """,
+            bindings: [.text(messageID)],
+            map: Self.mapMessageKnowledgeSource
+        )
+    }
+
+    public func listMessageKnowledgeSources(forSession sessionID: String) -> [MessageKnowledgeSourceRecord] {
+        queryMany(
+            """
+            SELECT s.id, s.message_id, s.volume_id, s.volume_title, s.record_id, s.record_title, s.excerpt
+            FROM message_knowledge_sources s
+            JOIN messages m ON m.id = s.message_id
+            WHERE m.session_id = ?
+            ORDER BY m.ts ASC, s.record_title ASC
+            """,
+            bindings: [.text(sessionID)],
+            map: Self.mapMessageKnowledgeSource
+        )
+    }
+
     // MARK: - Helpers
 
     private enum SQLValue {
@@ -352,6 +513,53 @@ public final class Repository: @unchecked Sendable {
             createdAt: columnText(statement, 2),
             active: sqlite3_column_int(statement, 3) != 0
         )
+    }
+
+    private static func mapKnowledgeVolume(_ statement: OpaquePointer) -> KnowledgeVolumeRecord {
+        KnowledgeVolumeRecord(
+            id: columnText(statement, 0),
+            title: columnText(statement, 1),
+            summary: columnOptionalText(statement, 2),
+            tags: decodeJSON(columnText(statement, 3), as: [String].self) ?? [],
+            sourceLabel: columnOptionalText(statement, 4),
+            isEnabled: sqlite3_column_int(statement, 5) != 0,
+            installedAt: columnText(statement, 6)
+        )
+    }
+
+    private static func mapKnowledgeRecord(_ statement: OpaquePointer) -> StoredKnowledgeRecord {
+        StoredKnowledgeRecord(
+            id: columnText(statement, 0),
+            volumeID: columnText(statement, 1),
+            title: columnText(statement, 2),
+            content: columnText(statement, 3),
+            tags: decodeJSON(columnText(statement, 4), as: [String].self) ?? []
+        )
+    }
+
+    private static func mapMessageKnowledgeSource(_ statement: OpaquePointer) -> MessageKnowledgeSourceRecord {
+        MessageKnowledgeSourceRecord(
+            id: columnText(statement, 0),
+            messageID: columnText(statement, 1),
+            volumeID: columnText(statement, 2),
+            volumeTitle: columnText(statement, 3),
+            recordID: columnText(statement, 4),
+            recordTitle: columnText(statement, 5),
+            excerpt: columnText(statement, 6)
+        )
+    }
+
+    private static func encodeJSON<T: Encodable>(_ value: T) -> String {
+        guard let data = try? JSONEncoder().encode(value),
+              let string = String(data: data, encoding: .utf8) else {
+            return "[]"
+        }
+        return string
+    }
+
+    private static func decodeJSON<T: Decodable>(_ json: String, as type: T.Type) -> T? {
+        guard let data = json.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode(type, from: data)
     }
 
     private static func columnText(_ statement: OpaquePointer, _ index: Int32) -> String {
