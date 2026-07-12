@@ -31,7 +31,8 @@ public struct SessionManager: Sendable {
     public mutating func recordPhotoQuestion(
         question: String,
         imagePath: String,
-        ocrText: String
+        ocrText: String,
+        visualObservationsJSON: String? = nil
     ) -> MessageRecord {
         repository.addMessage(
             sessionID: currentSession.id,
@@ -39,7 +40,8 @@ public struct SessionManager: Sendable {
             content: question,
             source: "photo",
             imagePath: imagePath,
-            ocrText: ocrText
+            ocrText: ocrText,
+            visualObservationsJSON: visualObservationsJSON
         )
     }
 

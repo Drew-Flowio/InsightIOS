@@ -14,6 +14,12 @@ public struct VisualContext: Sendable, Equatable {
 
     /// Backward-compatible summary for UI chips.
     public var caption: String {
+        if let summary = analysis.visualObservations?.summary,
+           !summary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let trimmed = summary.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.count > 120 ? String(trimmed.prefix(117)) + "…" : trimmed
+        }
+
         let ocr = analysis.resolvedOcrText(edited: editedOcrText)
         if !ocr.isEmpty {
             let firstLine = ocr.split(separator: "\n", maxSplits: 1).first.map(String.init) ?? ocr

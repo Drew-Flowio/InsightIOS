@@ -146,12 +146,19 @@ public enum RuntimeServices: Sendable {
             modelsDirectory: configuration.modelsDirectoryURL
         )
 
-        RuntimeServicesLog.info("Startup service mode: REAL. LLM=llama.cpp, STT=Whisper, Vision=Apple Vision, Recorder=AVAudioRecorder, TTS=system/XTTS.")
+        RuntimeServicesLog.info("Startup service mode: REAL. LLM=llama.cpp, STT=Whisper, Vision=OCR+SmolVLM(when installed), Recorder=AVAudioRecorder, TTS=system/XTTS.")
+
+        let vision: any VisionServing = CompositeVisionAnalyzer(
+            modelPath: store.visionModelURL,
+            mmprojPath: store.visionMmprojURL,
+            config: configuration.visionConfig
+        )
+
         return Bundle(
             llm: llm,
             stt: stt,
             tts: tts,
-            vision: SystemVisionImageAnalyzer(),
+            vision: vision,
             recorder: recorder,
             usesOnDeviceLLM: true,
             llmBackendDebugDescription: llm.backendDebugDescription

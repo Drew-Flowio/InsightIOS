@@ -74,6 +74,7 @@ public final class Repository: @unchecked Sendable {
         source: String = "text",
         imagePath: String? = nil,
         ocrText: String? = nil,
+        visualObservationsJSON: String? = nil,
         promptVersionID: String? = nil,
         latencyMs: Int? = nil,
         cancelled: Bool = false
@@ -87,6 +88,7 @@ public final class Repository: @unchecked Sendable {
             source: source,
             imagePath: imagePath,
             ocrText: ocrText,
+            visualObservationsJSON: visualObservationsJSON,
             promptVersionID: promptVersionID,
             latencyMs: latencyMs,
             cancelled: cancelled
@@ -94,8 +96,8 @@ public final class Repository: @unchecked Sendable {
         execute(
             """
             INSERT INTO messages
-            (id, session_id, ts, role, content, source, image_path, ocr_text, prompt_version_id, latency_ms, cancelled)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id, session_id, ts, role, content, source, image_path, ocr_text, visual_observations_json, prompt_version_id, latency_ms, cancelled)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             bindings: [
                 .text(message.id),
@@ -106,6 +108,7 @@ public final class Repository: @unchecked Sendable {
                 .text(message.source),
                 imagePath.map(SQLValue.text) ?? .null,
                 ocrText.map(SQLValue.text) ?? .null,
+                visualObservationsJSON.map(SQLValue.text) ?? .null,
                 message.promptVersionID.map(SQLValue.text) ?? .null,
                 message.latencyMs.map(SQLValue.int) ?? .null,
                 .int(cancelled ? 1 : 0),
@@ -117,7 +120,7 @@ public final class Repository: @unchecked Sendable {
     public func getSessionMessages(sessionID: String, limit: Int = 500) -> [MessageRecord] {
         queryMany(
             """
-            SELECT id, session_id, ts, role, content, source, image_path, ocr_text, prompt_version_id, latency_ms, cancelled
+            SELECT id, session_id, ts, role, content, source, image_path, ocr_text, visual_observations_json, prompt_version_id, latency_ms, cancelled
             FROM messages WHERE session_id = ? ORDER BY ts ASC LIMIT ?
             """,
             bindings: [.text(sessionID), .int(limit)],
@@ -585,9 +588,10 @@ public final class Repository: @unchecked Sendable {
             source: columnText(statement, 5),
             imagePath: columnOptionalText(statement, 6),
             ocrText: columnOptionalText(statement, 7),
-            promptVersionID: columnOptionalText(statement, 8),
-            latencyMs: columnOptionalInt(statement, 9),
-            cancelled: sqlite3_column_int(statement, 10) != 0
+            visualObservationsJSON: columnOptionalText(statement, 8),
+            promptVersionID: columnOptionalText(statement, 9),
+            latencyMs: columnOptionalInt(statement, 10),
+            cancelled: sqlite3_column_int(statement, 11) != 0
         )
     }
 

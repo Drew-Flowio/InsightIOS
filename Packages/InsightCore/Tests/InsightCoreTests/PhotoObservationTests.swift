@@ -2,21 +2,22 @@ import XCTest
 @testable import InsightCore
 
 final class PhotoObservationTests: XCTestCase {
-    func testPromptBlockStatesModelCannotSeeImageDirectly() {
+    func testPromptBlockStatesOcrOnlyWhenVlmUnavailable() {
         let analysis = PhotoAnalysisResult(
             imagePath: "/tmp/photo.jpg",
             width: 1024,
             height: 768,
             ocrText: "YAMAHA F150\nWARNING: HOT SURFACE",
-            detectedLabels: ["outboard motor"]
+            detectedLabels: ["outboard motor"],
+            visionAnalysisSource: .vlmUnavailable
         )
 
         let block = analysis.promptBlock(editedOcr: nil)
 
-        XCTAssertTrue(block.contains("cannot see the image directly"))
+        XCTAssertTrue(block.contains("Apple Vision OCR"))
+        XCTAssertTrue(block.contains("SmolVLM vision model is not available"))
         XCTAssertTrue(block.contains("Extracted text (OCR):"))
         XCTAssertTrue(block.contains("YAMAHA F150"))
-        XCTAssertTrue(block.contains("outboard motor"))
     }
 
     func testEditedOcrOverridesDetectedTextInPrompt() {
@@ -75,7 +76,7 @@ final class PhotoObservationTests: XCTestCase {
             personalityPrompt: "You are a practical assistant."
         )
 
-        XCTAssertTrue(messages[0].content.contains("cannot see the image directly"))
+        XCTAssertTrue(messages[0].content.contains("Apple Vision OCR"))
         XCTAssertTrue(messages[0].content.contains("MODEL ABC-123"))
         XCTAssertTrue(debugText.contains("IMAGE CONTEXT:"))
     }

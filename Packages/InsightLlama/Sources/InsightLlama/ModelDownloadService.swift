@@ -22,6 +22,14 @@ public struct ModelFileStore: Sendable {
         modelsDirectory.appendingPathComponent(bundle.referenceVoiceFileName)
     }
 
+    public var visionModelURL: URL {
+        modelsDirectory.appendingPathComponent(bundle.visionModelFileName)
+    }
+
+    public var visionMmprojURL: URL {
+        modelsDirectory.appendingPathComponent(bundle.visionMmprojFileName)
+    }
+
     public var isLLMReady: Bool {
         ModelFileIntegrity.isValidModelFile(at: llmModelURL, expectedBytes: bundle.llmDiskBytes)
     }
@@ -32,6 +40,11 @@ public struct ModelFileStore: Sendable {
 
     public var isReferenceVoiceReady: Bool {
         FileManager.default.fileExists(atPath: referenceVoiceURL.path)
+    }
+
+    public var isVisionReady: Bool {
+        FileManager.default.fileExists(atPath: visionModelURL.path) &&
+            FileManager.default.fileExists(atPath: visionMmprojURL.path)
     }
 
     public var isVoiceStackReady: Bool {

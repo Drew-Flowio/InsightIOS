@@ -456,10 +456,14 @@ public actor InsightEngine {
 
         if recordUser {
             if let context = visualContext, source == "photo" {
+                let observationsJSON = context.analysis.visualObservations.flatMap {
+                    VisualObservationsParser().encodeJSON($0)
+                }
                 _ = sessionManager.recordPhotoQuestion(
                     question: utterance,
                     imagePath: context.imagePath,
-                    ocrText: context.analysis.resolvedOcrText(edited: context.editedOcrText)
+                    ocrText: context.analysis.resolvedOcrText(edited: context.editedOcrText),
+                    visualObservationsJSON: observationsJSON
                 )
             } else {
                 _ = sessionManager.recordUserMessage(text: utterance, source: source)
@@ -592,12 +596,14 @@ public actor InsightEngine {
                 ocrText: analysis.ocrText,
                 detectedLabels: analysis.detectedLabels,
                 faceCount: analysis.faceCount,
-                barcodeCount: analysis.barcodeCount
+                barcodeCount: analysis.barcodeCount,
+                visualObservations: analysis.visualObservations,
+                visionAnalysisSource: analysis.visionAnalysisSource
             )
         }
 
         InsightEngineLog.info(
-            "Photo OCR completed for \(imageURL.lastPathComponent): \(analysis.ocrText.prefix(120))"
+            "Photo analysis completed for \(imageURL.lastPathComponent): source=\(analysis.visionAnalysisSource.rawValue), ocr=\(analysis.ocrText.prefix(80))"
         )
         return VisualContext(analysis: analysis)
     }

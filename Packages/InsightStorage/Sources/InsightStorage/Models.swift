@@ -23,6 +23,7 @@ public struct MessageRecord: Sendable, Equatable, Identifiable {
     public let source: String
     public let imagePath: String?
     public let ocrText: String?
+    public let visualObservationsJSON: String?
     public let promptVersionID: String?
     public let latencyMs: Int?
     public let cancelled: Bool
@@ -36,6 +37,7 @@ public struct MessageRecord: Sendable, Equatable, Identifiable {
         source: String,
         imagePath: String? = nil,
         ocrText: String? = nil,
+        visualObservationsJSON: String? = nil,
         promptVersionID: String?,
         latencyMs: Int?,
         cancelled: Bool
@@ -48,6 +50,7 @@ public struct MessageRecord: Sendable, Equatable, Identifiable {
         self.source = source
         self.imagePath = imagePath
         self.ocrText = ocrText
+        self.visualObservationsJSON = visualObservationsJSON
         self.promptVersionID = promptVersionID
         self.latencyMs = latencyMs
         self.cancelled = cancelled

@@ -30,6 +30,15 @@ struct MainChatView: View {
                 )
 
                 if viewModel.hasPhotoAttachment {
+                    if viewModel.photoVisualObservations != nil || viewModel.photoVisionSource != .ocrOnly {
+                        PhotoObservationsView(
+                            observations: viewModel.photoVisualObservations,
+                            source: viewModel.photoVisionSource
+                        )
+                        .padding(.horizontal, InsightSpacing.md)
+                        .padding(.bottom, InsightSpacing.xs)
+                    }
+
                     PhotoOcrEditView(
                         ocrText: $viewModel.photoOcrText,
                         thumbnailURL: viewModel.photoThumbnailURL,

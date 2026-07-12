@@ -10,10 +10,19 @@ public struct MockVisionAdapter: VisionServing {
             imagePath: imageURL.path,
             width: 1280,
             height: 960,
-            ocrText: "YAMAHA F150\nWARNING: HOT SURFACE\nMODEL 63P-12345-01",
-            detectedLabels: ["outboard motor", "engine"],
+            ocrText: "WARNING: HOT SURFACE\nMODEL ABC-123",
+            detectedLabels: ["equipment", "label"],
             faceCount: 0,
-            barcodeCount: 0
+            barcodeCount: 0,
+            visualObservations: VisualObservations(
+                visibleObjects: ["metal housing", "warning label"],
+                readableLabels: ["HOT SURFACE", "MODEL ABC-123"],
+                possibleProblems: ["scorch mark near vent"],
+                confidence: .medium,
+                needsAnotherAngle: true,
+                summary: "Equipment label with a possible heat-related mark near a vent."
+            ),
+            visionAnalysisSource: .ocrAndVlm
         )
     }
 

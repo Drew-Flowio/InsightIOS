@@ -18,6 +18,7 @@ Architecture requirements live in [VISION_LAYER.md](./VISION_LAYER.md).
 | v1.7 | User-owned PDF manuals as private local knowledge volumes |
 | v1.8 | Personal memory — profile, remember/recall/forget commands, Memory screen |
 | v1.9 | Personality presets, custom prompt editing, active identity display |
+| v2.0 | SmolVLM visual-reasoning prototype merged with OCR before Phi-4 |
 
 ---
 
