@@ -1,3 +1,4 @@
+import PhotosUI
 import SwiftUI
 import InsightCore
 
@@ -36,6 +37,26 @@ struct VisualWorkspaceView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .photosPicker(
+            isPresented: $viewModel.showPhotoPicker,
+            selection: $viewModel.selectedPhotoItem,
+            matching: .images
+        )
+        .onChange(of: viewModel.selectedPhotoItem) { _, _ in
+            viewModel.handleSelectedPhoto()
+        }
+        .fullScreenCover(isPresented: $viewModel.showCamera) {
+            CameraPickerView(
+                onImagePicked: { url in
+                    viewModel.showCamera = false
+                    viewModel.attachPhoto(from: url)
+                },
+                onCancel: {
+                    viewModel.showCamera = false
+                }
+            )
+            .ignoresSafeArea()
+        }
         .task {
             await loadPDFIfNeeded()
         }
@@ -167,6 +188,8 @@ struct VisualWorkspaceView: View {
             isBusy: viewModel.isBusy,
             isRecording: viewModel.isRecording,
             canSend: viewModel.canSend,
+            isVoiceReady: viewModel.isVoiceReady,
+            assistantName: viewModel.assistantName,
             isPromptBuilderEnabled: $viewModel.isPromptBuilderEnabled,
             canRestoreOriginalPrompt: viewModel.canRestoreOriginalPrompt,
             onRestoreOriginal: viewModel.restoreOriginalPrompt,

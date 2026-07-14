@@ -96,6 +96,8 @@ struct MainChatView: View {
                     isBusy: viewModel.isBusy,
                     isRecording: viewModel.isRecording,
                     canSend: viewModel.canSend,
+                    isVoiceReady: viewModel.isVoiceReady,
+                    assistantName: viewModel.assistantName,
                     isPromptBuilderEnabled: $viewModel.isPromptBuilderEnabled,
                     canRestoreOriginalPrompt: viewModel.canRestoreOriginalPrompt,
                     onRestoreOriginal: viewModel.restoreOriginalPrompt,
@@ -170,9 +172,6 @@ struct MainChatView: View {
         .fullScreenCover(item: $viewModel.visualWorkspaceContext) { context in
             VisualWorkspaceView(viewModel: viewModel, context: context)
                 .id(context.id)
-        }
-        .sheet(isPresented: $viewModel.showGeoMapScreen) {
-            GeoMapView(viewModel: viewModel)
         }
         .confirmationDialog(
             "Include location for this question?",

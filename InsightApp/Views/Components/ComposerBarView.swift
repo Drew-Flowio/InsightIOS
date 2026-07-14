@@ -8,6 +8,8 @@ struct ComposerBarView: View {
     let isBusy: Bool
     let isRecording: Bool
     let canSend: Bool
+    let isVoiceReady: Bool
+    let assistantName: String
     @Binding var isPromptBuilderEnabled: Bool
     let canRestoreOriginalPrompt: Bool
     let onRestoreOriginal: () -> Void
@@ -123,8 +125,8 @@ struct ComposerBarView: View {
                     onVoiceHoldEnd()
                 }
             }, perform: {})
-            .disabled(isBusy && !isRecording)
-            .accessibilityLabel(isRecording ? "Stop recording" : "Start voice message")
+            .disabled(isBusy && !isRecording || !isVoiceReady)
+            .accessibilityLabel(isRecording ? "Stop recording" : (isVoiceReady ? "Start voice message" : "Voice not installed"))
     }
 
     private var restoreOriginalBar: some View {
@@ -201,7 +203,7 @@ struct ComposerBarView: View {
         case .thinking: "Thinking…"
         case .streaming: "Streaming reply…"
         case .speaking: "Speaking…"
-        default: "Insight is working…"
+        default: "\(assistantName) is working…"
         }
     }
 
@@ -250,6 +252,8 @@ private struct ComposerBackground: View {
                     isBusy: false,
                     isRecording: false,
                     canSend: !text.isEmpty,
+                    isVoiceReady: true,
+                    assistantName: "Offgrid Minds",
                     isPromptBuilderEnabled: .constant(false),
                     canRestoreOriginalPrompt: false,
                     onRestoreOriginal: {},

@@ -52,7 +52,7 @@ struct PersonalityView: View {
                         } header: {
                             Text("Custom prompt")
                         } footer: {
-                            Text("Describe how Insight should communicate. Keep safety and factual grounding in mind.")
+                            Text("Describe how \(viewModel.assistantName) should communicate. Keep safety and factual grounding in mind.")
                         }
                     }
 

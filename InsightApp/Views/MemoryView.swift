@@ -28,7 +28,7 @@ struct MemoryView: View {
                     } header: {
                         Text("Profile")
                     } footer: {
-                        Text("Profile details stay on this device and shape how Insight answers.")
+                        Text("Profile details stay on this device and shape how \(viewModel.assistantName) answers.")
                     }
 
                     Section {
@@ -56,7 +56,7 @@ struct MemoryView: View {
                     } header: {
                         Text("Saved memories")
                     } footer: {
-                        Text("Only facts you explicitly ask Insight to remember appear here.")
+                        Text("Only facts you explicitly ask \(viewModel.assistantName) to remember appear here.")
                     }
                 }
                 .scrollContentBackground(.hidden)

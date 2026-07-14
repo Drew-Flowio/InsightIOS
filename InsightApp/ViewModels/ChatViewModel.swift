@@ -67,7 +67,6 @@ final class ChatViewModel {
     var showMemoryScreen = false
     var showPersonalityScreen = false
     var showVisionSetupScreen = false
-    var showGeoMapScreen = false
     var visualWorkspaceContext: VisualWorkspaceContext?
     var isPromptBuilderEnabled = false
     private(set) var promptBuilderOriginalText: String?
@@ -261,6 +260,9 @@ final class ChatViewModel {
                 }
                 voiceSetupState = .ready
                 ProductSetupStore.skippedVoice = false
+                if isEngineReady {
+                    await reinitializeEngine(with: configuration)
+                }
             } catch {
                 voiceSetupState = .failed("Could not download voice support.")
             }
@@ -301,8 +303,14 @@ final class ChatViewModel {
     }
 
     func startDemoWithVoice() {
-        composerText = ProductBranding.demoSuggestedQuestion
         dismissDemoGuide()
+        guard isVoiceReady, let engine else {
+            startDemoWithText()
+            return
+        }
+        activeTask = Task {
+            startVoiceRecording(engine: engine)
+        }
     }
 
     func startDemoWithPhoto() {
@@ -521,7 +529,6 @@ final class ChatViewModel {
             visual: .map,
             anchorMessageID: messages.last(where: { $0.isAssistant })?.id
         )
-        showGeoMapScreen = false
         haptic(.light)
     }
 
@@ -676,12 +683,21 @@ final class ChatViewModel {
             return
         }
 
+        guard isVoiceReady else {
+            errorMessage = "Voice support is not installed. Open Setup → Storage to download Whisper."
+            return
+        }
+
         guard !isBusy else { return }
         startVoiceRecording(engine: engine)
     }
 
     func beginHoldToTalk() {
         guard let engine, !isRecording, !isBusy else { return }
+        guard isVoiceReady else {
+            errorMessage = "Voice support is not installed. Open Setup → Storage to download Whisper."
+            return
+        }
         voiceCaptureUsesHold = true
         startVoiceRecording(engine: engine)
     }
@@ -1013,6 +1029,7 @@ final class ChatViewModel {
                     }
                 }
                 visionSetupState = .ready
+                ProductSetupStore.skippedVision = false
             } catch {
                 visionSetupState = .failed(error.localizedDescription)
                 visionSetupErrorMessage = error.localizedDescription
@@ -1107,6 +1124,19 @@ final class ChatViewModel {
             await refreshStorageSummary()
         } catch {
             bootstrapState = .failed(error.localizedDescription)
+        }
+    }
+
+    private func reinitializeEngine(with config: AppConfiguration) async {
+        engine = nil
+        do {
+            let engine = try InsightEngine(configuration: config)
+            try await engine.prepareRuntime()
+            self.engine = engine
+            await reloadHistory(from: engine)
+            refreshVisionStatus()
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 

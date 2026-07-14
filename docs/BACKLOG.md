@@ -27,6 +27,7 @@ Architecture requirements live in [VISION_LAYER.md](./VISION_LAYER.md).
 | v2.6 | Product setup and demo readiness — first-run wizard, storage view, Offgrid Minds branding |
 | v2.7 | Visual workspace — full-screen photos, maps, PDF pages with collapsible answer panel and in-place composer |
 | v2.8 | Prompt Builder — optional one-shot question improvement in composer using Phi-4 with restore-original |
+| v2.9 | Product readiness audit — `docs/IPHONE_PRODUCT_READINESS.md` and small disconnected-path fixes |
 
 ---
 
