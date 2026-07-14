@@ -477,6 +477,24 @@ public actor InsightEngine {
         )
     }
 
+    public func previewUserDataImport(data: Data, filename: String) -> UserDataImportPreview? {
+        try? UserDataImporter.preview(data: data, filename: filename)
+    }
+
+    public func importUserData(
+        data: Data,
+        filename: String,
+        title: String
+    ) -> MindImportOutcome {
+        UserDataImporter.install(
+            data: data,
+            filename: filename,
+            title: title,
+            into: repository,
+            importsDirectory: configuration.userImportsDirectoryURL
+        )
+    }
+
     public func resetMemory(scope: ResetScope = .session) async {
         sessionManager.reset(clearMemoryFacts: scope == .all)
         visualContext = nil

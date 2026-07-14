@@ -16,7 +16,7 @@ struct MindsLibraryView: View {
                 if viewModel.minds.isEmpty {
                     EmptyStateView(
                         title: "No Minds installed",
-                        subtitle: "Import an .ogpack Mind or a PDF manual to add local knowledge."
+                        subtitle: "Import an .ogpack Mind, CSV/JSON/text data, or a PDF manual to add local knowledge."
                     )
                 } else {
                     List {
@@ -54,7 +54,7 @@ struct MindsLibraryView: View {
             }
             .fileImporter(
                 isPresented: $showImporter,
-                allowedContentTypes: [.pdf, .json, .data, ogpackType],
+                allowedContentTypes: importContentTypes,
                 allowsMultipleSelection: false
             ) { result in
                 switch result {
@@ -64,6 +64,14 @@ struct MindsLibraryView: View {
                 case .failure:
                     viewModel.mindsFeedbackMessage = "Could not open the selected file."
                 }
+            }
+            .sheet(item: $viewModel.userDataImportDraft) { draft in
+                UserDataImportPreviewView(
+                    preview: draft.preview,
+                    mindTitle: $viewModel.userDataImportTitle,
+                    onCancel: viewModel.cancelUserDataImport,
+                    onInstall: viewModel.installUserDataImport
+                )
             }
             .alert(
                 "Mind Library",
@@ -84,8 +92,24 @@ struct MindsLibraryView: View {
         .preferredColorScheme(.dark)
     }
 
+    private var importContentTypes: [UTType] {
+        [
+            .commaSeparatedText,
+            .json,
+            .plainText,
+            .pdf,
+            .text,
+            markdownType,
+            ogpackType,
+        ]
+    }
+
     private var ogpackType: UTType {
         UTType(filenameExtension: "ogpack") ?? .json
+    }
+
+    private var markdownType: UTType {
+        UTType(filenameExtension: "md") ?? .plainText
     }
 
     private var mindsFeedbackBinding: Binding<Bool> {

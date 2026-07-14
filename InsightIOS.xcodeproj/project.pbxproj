@@ -42,6 +42,7 @@
 		A10000000000000000000020 /* LocationContextChipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000020 /* LocationContextChipView.swift */; };
 		A10000000000000000000021 /* GeoMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000021 /* GeoMapView.swift */; };
 		A10000000000000000000022 /* GeoRecordDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000022 /* GeoRecordDetailView.swift */; };
+		A10000000000000000000023 /* UserDataImportPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000023 /* UserDataImportPreviewView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -80,6 +81,7 @@
 		A20000000000000000000020 /* LocationContextChipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationContextChipView.swift; sourceTree = "<group>"; };
 		A20000000000000000000021 /* GeoMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoMapView.swift; sourceTree = "<group>"; };
 		A20000000000000000000022 /* GeoRecordDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoRecordDetailView.swift; sourceTree = "<group>"; };
+		A20000000000000000000023 /* UserDataImportPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataImportPreviewView.swift; sourceTree = "<group>"; };
 		A30000000000000000000001 /* InsightIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InsightIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -190,6 +192,7 @@
 				A2000000000000000000001D /* VisionSetupView.swift */,
 				A20000000000000000000021 /* GeoMapView.swift */,
 				A20000000000000000000022 /* GeoRecordDetailView.swift */,
+				A20000000000000000000023 /* UserDataImportPreviewView.swift */,
 				A6000000000000000000000A /* Components */,
 			);
 			path = Views;
@@ -325,6 +328,7 @@
 				A10000000000000000000020 /* LocationContextChipView.swift in Sources */,
 				A10000000000000000000021 /* GeoMapView.swift in Sources */,
 				A10000000000000000000022 /* GeoRecordDetailView.swift in Sources */,
+				A10000000000000000000023 /* UserDataImportPreviewView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

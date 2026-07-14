@@ -23,6 +23,7 @@ Architecture requirements live in [VISION_LAYER.md](./VISION_LAYER.md).
 | v2.2 | Model runtime coordination — RAM tiers, queued residency, Whisper/VLM/Phi-4 unload order |
 | v2.3 | Offline GPS location context — permission, prompt block, retrieval boost, persistence |
 | v2.4 | Offline map + geographic Mind records — MapKit screen, nearby sources, prompt enrichment |
+| v2.5 | User data import — CSV/JSON/text/Markdown into private local Minds with map-ready coordinates |
 
 ---
 

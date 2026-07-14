@@ -25,6 +25,17 @@ enum VisionSetupState: Equatable {
     case failed(String)
 }
 
+struct UserDataImportDraft: Identifiable, Equatable {
+    let id = UUID()
+    let data: Data
+    let filename: String
+    let preview: UserDataImportPreview
+
+    static func == (lhs: UserDataImportDraft, rhs: UserDataImportDraft) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
 @MainActor
 @Observable
 final class ChatViewModel {
@@ -50,6 +61,8 @@ final class ChatViewModel {
     var showPersonalityScreen = false
     var showVisionSetupScreen = false
     var showGeoMapScreen = false
+    var userDataImportDraft: UserDataImportDraft?
+    var userDataImportTitle = ""
     var selectedPhotoItem: PhotosPickerItem?
 
     private(set) var visionSetupState: VisionSetupState = .checking
@@ -469,18 +482,57 @@ final class ChatViewModel {
             do {
                 let data = try Data(contentsOf: url)
                 let filename = url.lastPathComponent
-                let outcome: MindImportOutcome
-                if url.pathExtension.lowercased() == "pdf" {
-                    outcome = await engine.importManual(from: data, suggestedFilename: filename)
-                } else {
-                    outcome = await engine.importMind(from: data)
+                let ext = url.pathExtension.lowercased()
+
+                if ext == "pdf" {
+                    let outcome = await engine.importManual(from: data, suggestedFilename: filename)
+                    mindsFeedbackMessage = message(for: outcome)
+                    await loadMinds()
+                    return
                 }
-                mindsFeedbackMessage = message(for: outcome)
-                await loadMinds()
+
+                if ext == "ogpack" || (ext == "json" && UserDataImporter.isOGPackJSON(data)) {
+                    let outcome = await engine.importMind(from: data)
+                    mindsFeedbackMessage = message(for: outcome)
+                    await loadMinds()
+                    return
+                }
+
+                if let preview = await engine.previewUserDataImport(data: data, filename: filename) {
+                    userDataImportTitle = preview.suggestedTitle
+                    userDataImportDraft = UserDataImportDraft(
+                        data: data,
+                        filename: filename,
+                        preview: preview
+                    )
+                    return
+                }
+
+                mindsFeedbackMessage = "This file could not be imported. Try CSV, JSON, text, Markdown, PDF, or .ogpack."
             } catch {
                 mindsFeedbackMessage = "Could not read the selected file."
             }
         }
+    }
+
+    func installUserDataImport() {
+        guard let engine, let draft = userDataImportDraft else { return }
+
+        Task {
+            let outcome = await engine.importUserData(
+                data: draft.data,
+                filename: draft.filename,
+                title: userDataImportTitle
+            )
+            cancelUserDataImport()
+            mindsFeedbackMessage = message(for: outcome)
+            await loadMinds()
+        }
+    }
+
+    func cancelUserDataImport() {
+        userDataImportDraft = nil
+        userDataImportTitle = ""
     }
 
     func importMind(from url: URL) {
