@@ -646,7 +646,7 @@ final class ChatViewModel {
                     builderEnabled: &isPromptBuilderEnabled
                 )
                 composerText = improved
-                haptic(.soft)
+                haptic(.success)
             } catch {
                 composerText = roughQuestion
                 promptBuilderOriginalText = nil
@@ -871,6 +871,7 @@ final class ChatViewModel {
                 if ext == "pdf" {
                     let outcome = await engine.importManual(from: data, suggestedFilename: filename)
                     mindsFeedbackMessage = message(for: outcome)
+                    if case .imported = outcome { haptic(.success) }
                     await loadMinds()
                     return
                 }
@@ -878,6 +879,7 @@ final class ChatViewModel {
                 if ext == "ogpack" || (ext == "json" && UserDataImporter.isOGPackJSON(data)) {
                     let outcome = await engine.importMind(from: data)
                     mindsFeedbackMessage = message(for: outcome)
+                    if case .imported = outcome { haptic(.success) }
                     await loadMinds()
                     return
                 }
@@ -910,6 +912,7 @@ final class ChatViewModel {
             )
             cancelUserDataImport()
             mindsFeedbackMessage = message(for: outcome)
+            if case .imported = outcome { haptic(.success) }
             await loadMinds()
         }
     }

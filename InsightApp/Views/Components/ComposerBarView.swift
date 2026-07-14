@@ -110,9 +110,12 @@ struct ComposerBarView: View {
                         .fill(isRecording ? AnyShapeStyle(InsightColors.listening) : AnyShapeStyle(InsightColors.surfaceElevated))
                         .overlay {
                             Circle()
-                                .strokeBorder(isRecording ? Color.clear : InsightColors.border, lineWidth: 1)
+                                .strokeBorder(
+                                    isRecording ? InsightColors.glowBlueStrong.opacity(0.5) : InsightColors.border,
+                                    lineWidth: 1
+                                )
                         }
-                        .shadow(color: isRecording ? InsightColors.listening.opacity(0.35) : .clear, radius: 12, y: 4)
+                        .shadow(color: isRecording ? InsightColors.glowBlueStrong.opacity(0.35) : .clear, radius: 12, y: 4)
                 }
             }
             .foregroundStyle(isRecording ? .white : InsightColors.textPrimary)
@@ -162,15 +165,15 @@ struct ComposerBarView: View {
                 .font(.system(size: 16, weight: .semibold))
                 .frame(width: InsightSpacing.minTouchTarget, height: InsightSpacing.minTouchTarget)
                 .background {
-                    Circle()
-                        .fill(isPromptBuilderEnabled ? AnyShapeStyle(InsightColors.accent.opacity(0.22)) : AnyShapeStyle(InsightColors.surfaceElevated))
-                        .overlay {
-                            Circle()
-                                .strokeBorder(
-                                    isPromptBuilderEnabled ? InsightColors.accent.opacity(0.65) : InsightColors.border,
-                                    lineWidth: 1
-                                )
-                        }
+                Circle()
+                    .fill(isPromptBuilderEnabled ? AnyShapeStyle(InsightColors.accentSoft) : AnyShapeStyle(InsightColors.surfaceElevated))
+                    .overlay {
+                        Circle()
+                            .strokeBorder(
+                                isPromptBuilderEnabled ? InsightColors.glowBlueStrong.opacity(0.55) : InsightColors.border,
+                                lineWidth: 1
+                            )
+                    }
                 }
                 .foregroundStyle(isPromptBuilderEnabled ? InsightColors.accentBright : InsightColors.textPrimary)
         }

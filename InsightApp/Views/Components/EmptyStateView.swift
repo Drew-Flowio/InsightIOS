@@ -7,37 +7,28 @@ struct EmptyStateView: View {
     @State private var glow = false
 
     var body: some View {
-        VStack(spacing: InsightSpacing.md) {
-            ZStack {
-                Circle()
-                    .fill(InsightColors.accentSoft)
-                    .frame(width: 72, height: 72)
-                    .blur(radius: glow ? 8 : 2)
+        VStack(spacing: InsightSpacing.lg) {
+            OGMBrandMark(style: .staticMark, size: 48)
+                .opacity(glow ? 1 : 0.88)
 
-                Circle()
-                    .strokeBorder(InsightTheme.accentGradient, lineWidth: 1.5)
-                    .frame(width: 56, height: 56)
-                    .shadow(color: InsightColors.accentGlow, radius: glow ? 16 : 6)
+            VStack(spacing: InsightSpacing.sm) {
+                Text(title)
+                    .font(InsightTypography.headline())
+                    .foregroundStyle(InsightColors.textPrimary)
+                    .multilineTextAlignment(.center)
+                    .tracking(0.3)
 
-                Image(systemName: "sparkles")
-                    .font(.system(size: 24, weight: .semibold))
-                    .foregroundStyle(InsightTheme.accentGradient)
+                Text(subtitle)
+                    .font(InsightTypography.caption())
+                    .foregroundStyle(InsightColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 300)
+                    .lineSpacing(3)
             }
-
-            Text(title)
-                .font(InsightTypography.headline())
-                .foregroundStyle(InsightColors.textPrimary)
-                .multilineTextAlignment(.center)
-
-            Text(subtitle)
-                .font(InsightTypography.caption())
-                .foregroundStyle(InsightColors.textSecondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 280)
         }
         .padding(InsightSpacing.xl)
         .onAppear {
-            withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+            withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
                 glow = true
             }
         }

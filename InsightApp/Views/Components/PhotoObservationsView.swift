@@ -8,11 +8,7 @@ struct PhotoObservationsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: InsightSpacing.xxs) {
             HStack {
-                Text("Photo observations")
-                    .font(InsightTypography.micro())
-                    .foregroundStyle(InsightColors.accent)
-                    .textCase(.uppercase)
-                    .tracking(0.5)
+                OGMBadge.from(visionSource: source)
 
                 Spacer()
 

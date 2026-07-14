@@ -15,47 +15,49 @@ struct StatusIndicatorView: View {
     @State private var pulse = false
 
     var body: some View {
-        HStack(spacing: InsightSpacing.sm) {
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: InsightSpacing.md) {
+            if InsightTheme.isActiveState(state) {
+                OGMBrandMark(style: .thinking, size: 28)
+                    .transition(.scale.combined(with: .opacity))
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
                 Text(assistantName)
                     .font(InsightTypography.title())
                     .foregroundStyle(InsightColors.textPrimary)
+                    .tracking(0.4)
 
                 HStack(spacing: InsightSpacing.xs) {
                     Circle()
                         .fill(InsightTheme.statusColor(for: state))
-                        .frame(width: 8, height: 8)
-                        .shadow(color: InsightTheme.statusColor(for: state).opacity(0.8), radius: pulse ? 6 : 2)
-                        .scaleEffect(InsightTheme.isActiveState(state) && pulse ? 1.15 : 1)
+                        .frame(width: 7, height: 7)
+                        .shadow(color: InsightTheme.statusColor(for: state).opacity(0.75), radius: pulse ? 5 : 2)
+                        .scaleEffect(InsightTheme.isActiveState(state) && pulse ? 1.12 : 1)
 
                     Text(InsightTheme.statusLabel(for: state))
-                        .font(InsightTypography.micro())
+                        .ogmMicroLabel()
                         .foregroundStyle(InsightColors.textSecondary)
-                        .textCase(.uppercase)
-                        .tracking(0.6)
                 }
+                .animation(InsightTheme.stateTransition(state), value: state)
 
                 if let personalityName, !personalityName.isEmpty {
                     Button(action: { onOpenPersonality?() }) {
                         Text(personalityName)
                             .font(InsightTypography.caption())
-                            .foregroundStyle(InsightColors.textSecondary.opacity(0.85))
+                            .foregroundStyle(InsightColors.textTertiary)
                     }
                     .buttonStyle(.plain)
                     .disabled(onOpenPersonality == nil)
                 }
             }
 
-            Spacer()
+            Spacer(minLength: 0)
 
             if showsLocationIndicator {
-                Image(systemName: "location.fill")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(InsightColors.accent.opacity(0.85))
-                    .accessibilityLabel("Location enabled")
+                OGMBadge(kind: .location, text: "GPS")
             }
 
-            HStack(spacing: InsightSpacing.xs) {
+            HStack(spacing: InsightSpacing.xxs) {
                 if let onOpenMap {
                     Button(action: onOpenMap) {
                         Image(systemName: "map")
@@ -72,12 +74,12 @@ struct StatusIndicatorView: View {
                     .accessibilityLabel("Settings")
                 }
 
-                if let onOpenPersonality {
-                    Button(action: onOpenPersonality) {
-                        Image(systemName: "theatermasks")
+                if let onOpenMinds {
+                    Button(action: onOpenMinds) {
+                        Image(systemName: "books.vertical")
                     }
                     .buttonStyle(InsightIconButtonStyle())
-                    .accessibilityLabel("Personality")
+                    .accessibilityLabel("Minds")
                 }
 
                 if let onOpenMemory {
@@ -86,14 +88,6 @@ struct StatusIndicatorView: View {
                     }
                     .buttonStyle(InsightIconButtonStyle())
                     .accessibilityLabel("Memory")
-                }
-
-                if let onOpenMinds {
-                    Button(action: onOpenMinds) {
-                        Image(systemName: "books.vertical")
-                    }
-                    .buttonStyle(InsightIconButtonStyle())
-                    .accessibilityLabel("Minds")
                 }
             }
         }
@@ -109,6 +103,7 @@ struct StatusIndicatorView: View {
                 }
                 .ignoresSafeArea(edges: .top)
         }
+        .animation(InsightTheme.stateTransition(state), value: state)
         .onAppear {
             withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
                 pulse = true
@@ -121,7 +116,7 @@ struct StatusIndicatorView: View {
     ZStack {
         InsightBackground()
         VStack {
-            StatusIndicatorView(state: .thinking, assistantName: "Insight")
+            StatusIndicatorView(state: .thinking, assistantName: "Offgrid Minds")
             Spacer()
         }
     }

@@ -68,7 +68,7 @@ struct ChatBubbleView: View {
 
             Text(message.content)
                 .font(InsightTypography.body())
-                .foregroundStyle(message.isUser ? Color.black.opacity(0.88) : InsightColors.textPrimary)
+                .foregroundStyle(InsightColors.textPrimary)
                 .multilineTextAlignment(message.isUser ? .trailing : .leading)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -106,7 +106,11 @@ struct ChatBubbleView: View {
         if message.isUser {
             RoundedRectangle(cornerRadius: InsightSpacing.bubbleRadius, style: .continuous)
                 .fill(InsightTheme.userBubbleGradient)
-                .shadow(color: InsightColors.accentGlow.opacity(0.5), radius: 12, y: 6)
+                .overlay {
+                    RoundedRectangle(cornerRadius: InsightSpacing.bubbleRadius, style: .continuous)
+                        .strokeBorder(InsightColors.amber.opacity(0.22), lineWidth: 1)
+                }
+                .shadow(color: InsightColors.glowBlue.opacity(0.35), radius: 10, y: 4)
         } else {
             RoundedRectangle(cornerRadius: InsightSpacing.bubbleRadius, style: .continuous)
                 .fill(InsightColors.assistantBubble)

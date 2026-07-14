@@ -8,16 +8,19 @@ struct InsightIconButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 18, weight: .semibold))
-            .foregroundStyle(isProminent ? Color.black.opacity(0.85) : tint)
+            .foregroundStyle(isProminent ? InsightColors.background : tint)
             .frame(width: InsightSpacing.minTouchTarget, height: InsightSpacing.minTouchTarget)
             .background {
                 Circle()
                     .fill(isProminent ? AnyShapeStyle(InsightTheme.accentGradient) : AnyShapeStyle(background))
                     .overlay {
                         Circle()
-                            .strokeBorder(InsightColors.border, lineWidth: isProminent ? 0 : 1)
+                            .strokeBorder(
+                                isProminent ? InsightColors.accent.opacity(0.35) : InsightColors.border,
+                                lineWidth: 1
+                            )
                     }
-                    .shadow(color: isProminent ? InsightColors.accentGlow : .clear, radius: 12, y: 4)
+                    .shadow(color: isProminent ? InsightColors.accentGlow : .clear, radius: 10, y: 3)
             }
             .scaleEffect(configuration.isPressed ? 0.92 : 1)
             .animation(.spring(response: 0.28, dampingFraction: 0.65), value: configuration.isPressed)
@@ -28,13 +31,17 @@ struct InsightPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(InsightTypography.bodyMedium())
-            .foregroundStyle(Color.black.opacity(0.85))
+            .foregroundStyle(InsightColors.background)
             .padding(.horizontal, InsightSpacing.lg)
             .padding(.vertical, InsightSpacing.sm)
             .background {
                 Capsule()
                     .fill(InsightTheme.accentGradient)
-                    .shadow(color: InsightColors.accentGlow, radius: 14, y: 4)
+                    .overlay {
+                        Capsule()
+                            .strokeBorder(InsightColors.accentBright.opacity(0.35), lineWidth: 1)
+                    }
+                    .shadow(color: InsightColors.accentGlow, radius: 12, y: 4)
             }
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .animation(.spring(response: 0.28, dampingFraction: 0.7), value: configuration.isPressed)

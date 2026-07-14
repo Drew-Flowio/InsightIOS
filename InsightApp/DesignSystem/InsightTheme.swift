@@ -3,7 +3,7 @@ import InsightCore
 
 enum InsightTheme {
     static let accentGradient = LinearGradient(
-        colors: [InsightColors.accentBright, InsightColors.userBubbleEnd],
+        colors: [InsightColors.accentBright, InsightColors.accent],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
@@ -24,17 +24,18 @@ enum InsightTheme {
         endPoint: .bottomTrailing
     )
 
+    static let cardMaterial = Material.ultraThinMaterial
+
     static func statusColor(for state: AppState) -> Color {
         switch state {
         case .idle: InsightColors.textTertiary
         case .listening: InsightColors.listening
         case .transcribing: InsightColors.thinking
-        case .analyzing: InsightColors.accent
-        case .thinking: InsightColors.thinking
-        case .improvingPrompt: InsightColors.thinking
-        case .streaming: InsightColors.accent
+        case .analyzing: InsightColors.glowBlueStrong
+        case .thinking, .improvingPrompt: InsightColors.thinking
+        case .streaming: InsightColors.accentBright
         case .speaking: InsightColors.success
-        case .error: InsightColors.listening
+        case .error: InsightColors.amber
         }
     }
 
@@ -58,6 +59,10 @@ enum InsightTheme {
         default: true
         }
     }
+
+    static func stateTransition(_ state: AppState) -> Animation {
+        .spring(response: 0.38, dampingFraction: 0.86)
+    }
 }
 
 struct InsightBackground: View {
@@ -70,17 +75,47 @@ struct InsightBackground: View {
                 colors: [InsightColors.glowBlue, .clear],
                 center: .topTrailing,
                 startRadius: 20,
-                endRadius: 380
+                endRadius: 420
             )
             .ignoresSafeArea()
 
             RadialGradient(
-                colors: [InsightColors.glowPurple, .clear],
+                colors: [InsightColors.glowNavy, .clear],
                 center: .bottomLeading,
                 startRadius: 10,
-                endRadius: 320
+                endRadius: 340
+            )
+            .ignoresSafeArea()
+
+            RadialGradient(
+                colors: [InsightColors.amberSoft, .clear],
+                center: UnitPoint(x: 0.5, y: 0.92),
+                startRadius: 8,
+                endRadius: 180
             )
             .ignoresSafeArea()
         }
+    }
+}
+
+struct OGMCardBackground: ViewModifier {
+    var cornerRadius: CGFloat = InsightSpacing.cardRadius
+
+    func body(content: Content) -> some View {
+        content
+            .background {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(InsightColors.surfaceElevated.opacity(0.88))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .strokeBorder(InsightColors.borderStrong, lineWidth: 1)
+                    }
+            }
+    }
+}
+
+extension View {
+    func ogmCardBackground(cornerRadius: CGFloat = InsightSpacing.cardRadius) -> some View {
+        modifier(OGMCardBackground(cornerRadius: cornerRadius))
     }
 }

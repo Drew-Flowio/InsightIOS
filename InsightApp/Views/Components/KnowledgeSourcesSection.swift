@@ -13,15 +13,12 @@ struct KnowledgeSourcesSection: View {
                 }
             } label: {
                 HStack(spacing: InsightSpacing.xxs) {
-                    Image(systemName: "books.vertical.fill")
-                        .font(.system(size: 11, weight: .semibold))
-                    Text("Sources used (\(sources.count))")
-                        .font(InsightTypography.micro())
+                    OGMBadge(kind: .sources, text: "Sources (\(sources.count))")
                     Spacer(minLength: 0)
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(InsightColors.textTertiary)
                 }
-                .foregroundStyle(InsightColors.textSecondary)
             }
             .buttonStyle(.plain)
 

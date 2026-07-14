@@ -1,4 +1,5 @@
 import SwiftUI
+import InsightCore
 
 struct StreamingIndicatorView: View {
     @State private var phase = 0.0
@@ -7,8 +8,8 @@ struct StreamingIndicatorView: View {
         HStack(spacing: 5) {
             ForEach(0..<3, id: \.self) { index in
                 Circle()
-                    .fill(InsightColors.accent)
-                    .frame(width: 6, height: 6)
+                    .fill(InsightColors.glowBlueStrong)
+                    .frame(width: 5, height: 5)
                     .opacity(dotOpacity(for: index))
             }
         }
@@ -30,32 +31,37 @@ struct ThinkingShimmer: View {
     @State private var animate = false
 
     var body: some View {
-        RoundedRectangle(cornerRadius: InsightSpacing.bubbleRadius)
-            .fill(InsightColors.surfaceElevated)
-            .frame(height: 52)
-            .overlay {
-                RoundedRectangle(cornerRadius: InsightSpacing.bubbleRadius)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                .clear,
-                                InsightColors.accentSoft,
-                                .clear,
-                            ],
-                            startPoint: animate ? .leading : .trailing,
-                            endPoint: animate ? .trailing : .leading
+        HStack(spacing: InsightSpacing.sm) {
+            OGMBrandMark(style: .thinking, size: 28)
+
+            RoundedRectangle(cornerRadius: InsightSpacing.bubbleRadius)
+                .fill(InsightColors.surfaceElevated)
+                .frame(height: 52)
+                .frame(maxWidth: .infinity)
+                .overlay {
+                    RoundedRectangle(cornerRadius: InsightSpacing.bubbleRadius)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    .clear,
+                                    InsightColors.accentSoft,
+                                    .clear,
+                                ],
+                                startPoint: animate ? .leading : .trailing,
+                                endPoint: animate ? .trailing : .leading
+                            )
                         )
-                    )
-            }
-            .overlay {
-                RoundedRectangle(cornerRadius: InsightSpacing.bubbleRadius)
-                    .strokeBorder(InsightColors.border, lineWidth: 1)
-            }
-            .onAppear {
-                withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
-                    animate = true
                 }
+                .overlay {
+                    RoundedRectangle(cornerRadius: InsightSpacing.bubbleRadius)
+                        .strokeBorder(InsightColors.border, lineWidth: 1)
+                }
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
+                animate = true
             }
+        }
     }
 }
 

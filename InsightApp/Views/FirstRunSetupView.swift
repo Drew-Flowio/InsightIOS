@@ -50,13 +50,19 @@ struct FirstRunSetupView: View {
     }
 
     private var header: some View {
-        VStack(spacing: InsightSpacing.xs) {
+        VStack(spacing: InsightSpacing.sm) {
+            OGMBrandMark(style: .staticMark, size: 44)
+
             Text(ProductBranding.appName)
-                .font(InsightTypography.title())
+                .font(InsightTypography.display())
                 .foregroundStyle(InsightColors.textPrimary)
+                .tracking(0.5)
+
             Text(step.title)
                 .font(InsightTypography.caption())
                 .foregroundStyle(InsightColors.textSecondary)
+                .tracking(0.6)
+                .textCase(.uppercase)
         }
     }
 
@@ -192,7 +198,7 @@ struct FirstRunSetupView: View {
                 .foregroundStyle(InsightColors.textSecondary)
             Label("Ready for questions, voice, and photos", systemImage: "checkmark.circle.fill")
                 .font(InsightTypography.caption())
-                .foregroundStyle(InsightColors.accent)
+                .foregroundStyle(InsightColors.glowBlueStrong)
         }
     }
 
@@ -326,7 +332,7 @@ struct FirstRunSetupView: View {
 
     private func color(for state: ProductSetupFeatureState) -> Color {
         switch state {
-        case .ready: InsightColors.accent
+        case .ready: InsightColors.glowBlueStrong
         case .missing: InsightColors.textSecondary
         case .optional, .skipped: InsightColors.textTertiary
         }

@@ -1,8 +1,12 @@
 import SwiftUI
 
 enum InsightTypography {
+    static func display() -> Font {
+        .system(size: 24, weight: .semibold, design: .default)
+    }
+
     static func title() -> Font {
-        .system(size: 20, weight: .semibold, design: .rounded)
+        .system(size: 20, weight: .semibold, design: .default)
     }
 
     static func headline() -> Font {
@@ -22,10 +26,22 @@ enum InsightTypography {
     }
 
     static func micro() -> Font {
-        .system(size: 11, weight: .semibold, design: .rounded)
+        .system(size: 11, weight: .semibold, design: .default)
     }
 
     static func composer() -> Font {
         .system(size: 17, weight: .regular, design: .default)
+    }
+
+    static func letterSpacing(for font: Font) -> CGFloat {
+        0.4
+    }
+}
+
+extension View {
+    func ogmMicroLabel() -> some View {
+        font(InsightTypography.micro())
+            .tracking(0.8)
+            .textCase(.uppercase)
     }
 }

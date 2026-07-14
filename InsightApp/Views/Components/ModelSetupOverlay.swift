@@ -9,22 +9,13 @@ struct ModelSetupOverlay: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.55).ignoresSafeArea()
+            Color.black.opacity(0.62).ignoresSafeArea()
 
             VStack(spacing: InsightSpacing.lg) {
-                ZStack {
-                    Circle()
-                        .fill(InsightColors.accentSoft)
-                        .frame(width: 88, height: 88)
-                        .blur(radius: 10)
-
-                    Circle()
-                        .strokeBorder(InsightTheme.accentGradient, lineWidth: 1.5)
-                        .frame(width: 64, height: 64)
-
-                    Image(systemName: iconName)
-                        .font(.system(size: 26, weight: .semibold))
-                        .foregroundStyle(InsightTheme.accentGradient)
+                if case .loadingBrain = state {
+                    OGMBrandMark(style: .loading, size: 56)
+                } else {
+                    OGMBrandMark(style: .staticMark, size: 52)
                 }
 
                 VStack(spacing: InsightSpacing.xs) {
@@ -32,17 +23,19 @@ struct ModelSetupOverlay: View {
                         .font(InsightTypography.headline())
                         .foregroundStyle(InsightColors.textPrimary)
                         .multilineTextAlignment(.center)
+                        .tracking(0.3)
 
                     Text(subtitle)
                         .font(InsightTypography.caption())
                         .foregroundStyle(InsightColors.textSecondary)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: 300)
+                        .lineSpacing(3)
                 }
 
                 if case .downloading(let fraction) = state {
                     ProgressView(value: fraction)
-                        .tint(InsightColors.accent)
+                        .tint(InsightColors.accentBright)
                         .frame(maxWidth: 260)
                 }
 
@@ -60,15 +53,8 @@ struct ModelSetupOverlay: View {
                 }
             }
             .padding(InsightSpacing.xl)
-            .background {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(InsightColors.surfaceElevated)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .strokeBorder(InsightColors.borderStrong, lineWidth: 1)
-                    }
-                    .shadow(color: InsightColors.accentGlow.opacity(0.25), radius: 24, y: 10)
-            }
+            .ogmCardBackground(cornerRadius: 24)
+            .shadow(color: InsightColors.glowBlue.opacity(0.35), radius: 24, y: 10)
             .padding(InsightSpacing.lg)
         }
         .transition(.opacity.combined(with: .scale(scale: 0.98)))
@@ -108,16 +94,6 @@ struct ModelSetupOverlay: View {
         }
     }
 
-    private var iconName: String {
-        switch state {
-        case .needsModel: "arrow.down.circle.fill"
-        case .downloading: "icloud.and.arrow.down.fill"
-        case .loadingBrain: "brain.head.profile.fill"
-        case .failed: "exclamationmark.triangle.fill"
-        case .ready, .preview: "sparkles"
-        }
-    }
-
     private var showsDownloadButton: Bool {
         if case .needsModel = state { return true }
         return false
@@ -132,7 +108,7 @@ struct ModelSetupOverlay: View {
 #Preview {
     ModelSetupOverlay(
         bundle: ModelCatalog.primaryHighQuality,
-        state: .needsModel,
+        state: .loadingBrain,
         onDownload: {},
         onRetry: {}
     )
