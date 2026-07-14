@@ -69,6 +69,8 @@ final class ChatViewModel {
     var showVisionSetupScreen = false
     var showGeoMapScreen = false
     var visualWorkspaceContext: VisualWorkspaceContext?
+    var isPromptBuilderEnabled = false
+    private(set) var promptBuilderOriginalText: String?
     var showStorageScreen = false
     var showDemoGuide = false
     var userDataImportDraft: UserDataImportDraft?
@@ -177,6 +179,17 @@ final class ChatViewModel {
     var canSend: Bool {
         let hasQuestion = !composerText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         return hasQuestion && !isBusy && isEngineReady
+    }
+
+    var canRestoreOriginalPrompt: Bool {
+        promptBuilderOriginalText != nil
+    }
+
+    func restoreOriginalPrompt() {
+        guard let original = promptBuilderOriginalText else { return }
+        composerText = original
+        promptBuilderOriginalText = nil
+        haptic(.light)
     }
 
     var hasLocationContext: Bool {
@@ -350,6 +363,36 @@ final class ChatViewModel {
     func sendMessage() {
         let text = composerText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, let engine else { return }
+
+        if isPromptBuilderEnabled {
+            let captured = text
+            let proceedImprove: () -> Void = { [weak self] in
+                guard let self else { return }
+                self.promptBuilderOriginalText = captured
+                self.composerText = ""
+                self.isPromptBuilderEnabled = false
+                self.voiceSubmissionPending = false
+                self.performPromptImprovement(engine: engine, roughQuestion: captured)
+            }
+
+            switch locationPreference {
+            case .off:
+                locationCaption = nil
+                Task {
+                    await engine.clearLocationContext()
+                    proceedImprove()
+                }
+            case .on:
+                activeTask = Task {
+                    await self.attachLocationForTurn(engine: engine)
+                    proceedImprove()
+                }
+            case .askEachTime:
+                pendingSendAction = proceedImprove
+                showLocationConfirmDialog = true
+            }
+            return
+        }
 
         composerText = ""
         let useVoiceReply = voiceSubmissionPending
@@ -561,6 +604,51 @@ final class ChatViewModel {
         let anchor = messages[index]
         if anchor.role == .photo { return anchor }
         return messages.prefix(index).reversed().first(where: { $0.role == .photo })
+    }
+
+    private func workspaceDescriptionForPromptBuilder() -> String? {
+        guard let context = visualWorkspaceContext else { return nil }
+        switch context.visual {
+        case .photo:
+            return "User is viewing an attached photo in the visual workspace."
+        case .map:
+            return "User is viewing the offline map in the visual workspace."
+        case .manualPage(_, let title, let page, let pageCount):
+            return "User is viewing manual \"\(title)\" page \(page) of \(pageCount) in the visual workspace."
+        }
+    }
+
+    private func performPromptImprovement(engine: InsightEngine, roughQuestion: String) {
+        activeTask = Task {
+            do {
+                if hasPhotoAttachment {
+                    await engine.setPhotoOcrText(photoOcrText)
+                }
+
+                let improved = try await engine.improveQuestion(
+                    roughQuestion,
+                    workspaceDescription: workspaceDescriptionForPromptBuilder(),
+                    onState: { [weak self] state in
+                        Task { @MainActor in self?.appState = state }
+                    }
+                )
+
+                _ = PromptBuilderSendRouter.applyDraft(
+                    improved: improved,
+                    original: roughQuestion,
+                    builderEnabled: &isPromptBuilderEnabled
+                )
+                composerText = improved
+                haptic(.soft)
+            } catch {
+                composerText = roughQuestion
+                promptBuilderOriginalText = nil
+                isPromptBuilderEnabled = false
+                errorMessage = error.localizedDescription
+                appState = .idle
+            }
+            activeTask = nil
+        }
     }
 
     private func attachLocationForTurn(engine: InsightEngine) async {

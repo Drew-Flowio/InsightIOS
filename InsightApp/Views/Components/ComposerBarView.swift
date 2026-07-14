@@ -8,6 +8,9 @@ struct ComposerBarView: View {
     let isBusy: Bool
     let isRecording: Bool
     let canSend: Bool
+    @Binding var isPromptBuilderEnabled: Bool
+    let canRestoreOriginalPrompt: Bool
+    let onRestoreOriginal: () -> Void
     let onSend: () -> Void
     let onVoiceTap: () -> Void
     let onVoiceHoldStart: () -> Void
@@ -20,6 +23,14 @@ struct ComposerBarView: View {
 
     var body: some View {
         VStack(spacing: InsightSpacing.sm) {
+            if canRestoreOriginalPrompt {
+                restoreOriginalBar
+            }
+
+            if isPromptBuilderEnabled {
+                promptBuilderBanner
+            }
+
             if isBusy {
                 stopBar
             }
@@ -32,6 +43,8 @@ struct ComposerBarView: View {
                 )
 
                 composerField
+
+                promptBuilderToggle
 
                 voiceButton
 
@@ -114,6 +127,56 @@ struct ComposerBarView: View {
             .accessibilityLabel(isRecording ? "Stop recording" : "Start voice message")
     }
 
+    private var restoreOriginalBar: some View {
+        HStack {
+            Text("Draft prompt ready")
+                .font(InsightTypography.micro())
+                .foregroundStyle(InsightColors.textSecondary)
+            Spacer()
+            Button("Restore Original", action: onRestoreOriginal)
+                .font(InsightTypography.micro())
+                .foregroundStyle(InsightColors.accent)
+        }
+        .padding(.horizontal, InsightSpacing.xs)
+    }
+
+    private var promptBuilderBanner: some View {
+        HStack(spacing: InsightSpacing.xxs) {
+            Image(systemName: "wand.and.stars")
+                .font(.system(size: 11, weight: .semibold))
+            Text("Next send improves your question")
+                .font(InsightTypography.micro())
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(InsightColors.accent)
+        .padding(.horizontal, InsightSpacing.xs)
+    }
+
+    private var promptBuilderToggle: some View {
+        Button {
+            isPromptBuilderEnabled.toggle()
+        } label: {
+            Image(systemName: isPromptBuilderEnabled ? "wand.and.stars.inverse" : "wand.and.stars")
+                .font(.system(size: 16, weight: .semibold))
+                .frame(width: InsightSpacing.minTouchTarget, height: InsightSpacing.minTouchTarget)
+                .background {
+                    Circle()
+                        .fill(isPromptBuilderEnabled ? AnyShapeStyle(InsightColors.accent.opacity(0.22)) : AnyShapeStyle(InsightColors.surfaceElevated))
+                        .overlay {
+                            Circle()
+                                .strokeBorder(
+                                    isPromptBuilderEnabled ? InsightColors.accent.opacity(0.65) : InsightColors.border,
+                                    lineWidth: 1
+                                )
+                        }
+                }
+                .foregroundStyle(isPromptBuilderEnabled ? InsightColors.accentBright : InsightColors.textPrimary)
+        }
+        .buttonStyle(.plain)
+        .disabled(isBusy && !isRecording)
+        .accessibilityLabel(isPromptBuilderEnabled ? "Prompt Builder on" : "Prompt Builder off")
+    }
+
     private var stopBar: some View {
         HStack {
             StreamingIndicatorView()
@@ -134,6 +197,7 @@ struct ComposerBarView: View {
         switch appState {
         case .listening: "Listening…"
         case .transcribing: "Transcribing…"
+        case .improvingPrompt: "Improving question…"
         case .thinking: "Thinking…"
         case .streaming: "Streaming reply…"
         case .speaking: "Speaking…"
@@ -143,13 +207,13 @@ struct ComposerBarView: View {
 
     private var sendButton: some View {
         Button(action: onSend) {
-            Image(systemName: "arrow.up")
+            Image(systemName: isPromptBuilderEnabled ? "sparkles" : "arrow.up")
                 .font(.system(size: 17, weight: .bold))
                 .frame(width: InsightSpacing.minTouchTarget, height: InsightSpacing.minTouchTarget)
         }
         .buttonStyle(InsightIconButtonStyle(isProminent: true))
         .disabled(!canSend)
-        .accessibilityLabel("Send message")
+        .accessibilityLabel(isPromptBuilderEnabled ? "Improve question" : "Send message")
     }
 }
 
@@ -186,6 +250,9 @@ private struct ComposerBackground: View {
                     isBusy: false,
                     isRecording: false,
                     canSend: !text.isEmpty,
+                    isPromptBuilderEnabled: .constant(false),
+                    canRestoreOriginalPrompt: false,
+                    onRestoreOriginal: {},
                     onSend: {},
                     onVoiceTap: {},
                     onVoiceHoldStart: {},

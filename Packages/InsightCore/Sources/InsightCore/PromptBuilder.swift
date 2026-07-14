@@ -204,6 +204,33 @@ public struct PromptBuilder: Sendable {
         return AgentResponseValidation(text: text)
     }
 
+    public func sanitizeImprovedPrompt(_ response: String) -> String {
+        var text = sanitizeModelOutput(response)
+        text = stripRoleLabels(from: text)
+        text = removeRepeatedLines(from: text)
+
+        let prefixes = [
+            "improved question:",
+            "improved prompt:",
+            "rewritten question:",
+            "question:",
+            "prompt:",
+        ]
+        var lower = text.lowercased()
+        for prefix in prefixes {
+            if lower.hasPrefix(prefix) {
+                text = String(text.dropFirst(prefix.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+                lower = text.lowercased()
+            }
+        }
+
+        if text.hasPrefix("\""), text.hasSuffix("\""), text.count >= 2 {
+            text = String(text.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        return text
+    }
+
     public func sanitizeStreamingToken(_ piece: String) -> String {
         var cleaned = piece
         for token in Self.modelSpecialTokens {

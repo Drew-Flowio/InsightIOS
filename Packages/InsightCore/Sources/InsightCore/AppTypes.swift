@@ -7,6 +7,7 @@ public enum AppState: String, Sendable, CaseIterable {
     case transcribing
     case analyzing
     case thinking
+    case improvingPrompt
     case streaming
     case speaking
     case error

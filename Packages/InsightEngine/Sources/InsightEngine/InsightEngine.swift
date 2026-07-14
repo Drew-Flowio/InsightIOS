@@ -138,6 +138,65 @@ public actor InsightEngine {
         return result
     }
 
+    /// Rewrites a rough question into a clearer prompt without recording chat history.
+    public func improveQuestion(
+        _ roughQuestion: String,
+        workspaceDescription: String? = nil,
+        onState: (@Sendable (AppState) -> Void)? = nil
+    ) async throws -> String {
+        cancelToken.reset()
+        enrichLocationContextIfNeeded()
+
+        let trimmed = roughQuestion.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return trimmed }
+
+        let userProfile = loadUserProfileContext()
+        let relevantMemory = retrieveRelevantMemory(for: trimmed)
+        let retrievedKnowledge = retrieveRelevantKnowledge(for: trimmed)
+        let enabledMindTitles = listEnabledMinds().map(\.title)
+
+        let messages = promptBuilder.buildPromptImprovementMessages(
+            PromptImprovementInput(
+                roughQuestion: trimmed,
+                imageDescription: visualContext?.promptBlock(),
+                workspaceDescription: workspaceDescription,
+                locationDescription: locationContext?.promptBlock(),
+                enabledMindTitles: enabledMindTitles,
+                userProfile: userProfile,
+                relevantMemory: relevantMemory,
+                retrievedKnowledge: retrievedKnowledge
+            )
+        )
+
+        await setState(.improvingPrompt, notify: onState)
+        try await runtimeCoordinator.acquireLLM()
+
+        let token = cancelToken
+        let formatter = promptBuilder
+        var rawText = ""
+
+        do {
+            rawText = try await llm.generate(
+                messages: messages,
+                onToken: nil,
+                shouldCancel: { token.isCancelled }
+            )
+        } catch {
+            await runtimeCoordinator.releaseLLMAfterTurnIfNeeded()
+            await setState(.idle, notify: onState)
+            throw error
+        }
+
+        await runtimeCoordinator.releaseLLMAfterTurnIfNeeded()
+        await setState(.idle, notify: onState)
+
+        let improved = promptBuilder.sanitizeImprovedPrompt(rawText)
+        if improved.isEmpty {
+            return trimmed
+        }
+        return improved
+    }
+
     // MARK: - Voice
 
     public func startRecording(onState: (@Sendable (AppState) -> Void)? = nil) async throws {
