@@ -49,6 +49,7 @@ final class ChatViewModel {
     var showMemoryScreen = false
     var showPersonalityScreen = false
     var showVisionSetupScreen = false
+    var showGeoMapScreen = false
     var selectedPhotoItem: PhotosPickerItem?
 
     private(set) var visionSetupState: VisionSetupState = .checking
@@ -258,6 +259,15 @@ final class ChatViewModel {
     func requestLocationPermission() {
         locationService.requestWhenInUseAuthorization()
         refreshLocationStatus()
+    }
+
+    func loadGeographicRecords() async -> [GeographicRecord] {
+        guard let engine else { return [] }
+        return await engine.listGeographicRecordsFromEnabledMinds()
+    }
+
+    func captureMapLocationSnapshot() async -> LocationSnapshot {
+        await locationService.captureSnapshot()
     }
 
     private func attachLocationForTurn(engine: InsightEngine) async {

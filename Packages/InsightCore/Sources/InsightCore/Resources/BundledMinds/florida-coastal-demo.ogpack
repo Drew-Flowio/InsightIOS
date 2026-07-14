@@ -3,7 +3,7 @@
   "volume": {
     "id": "mind.florida-coastal-demo",
     "title": "Florida Coastal",
-    "version": "1.0",
+    "version": "1.1",
     "summary": "Coastal boating and outboard troubleshooting reference for Florida waters.",
     "tags": ["coastal", "boating", "florida", "outboard", "marine"]
   },
@@ -25,6 +25,24 @@
       "title": "Post-saltwater rinse checklist",
       "content": "After coastal use, flush the outboard cooling system, rinse external fittings, and inspect the trailer bunks or rollers for salt buildup. Salt accelerates corrosion on electrical connectors and trailer bearings. A quick freshwater flush reduces long-term maintenance on both engine and trailer.",
       "tags": ["coastal", "maintenance", "trailer", "corrosion", "rinse"]
+    },
+    {
+      "id": "place.port-everglades-inlet",
+      "title": "Port Everglades inlet",
+      "content": "Major commercial inlet on the southeast Florida coast. Expect heavy vessel traffic, strong tidal influence, and shifting sand near the jetties. Give large vessels extra room and monitor VHF traffic when available.",
+      "tags": ["geo:26.0889,-80.1167", "geo-type:place", "geo-name:Port Everglades Inlet", "coastal", "inlet", "florida"]
+    },
+    {
+      "id": "zone.dania-beach-no-wake",
+      "title": "Dania Beach no-wake reminder",
+      "content": "Reduced-speed area near shore access points and marina approaches. Operate at idle speed until clear of congested shoreline zones.",
+      "tags": ["geo:26.0520,-80.1340", "geo-type:zone", "geo-name:Dania Beach nearshore zone", "geo-radius:1200", "coastal", "regulations"]
+    },
+    {
+      "id": "point.hillsboro-inlet-mark",
+      "title": "Hillsboro Inlet sea buoy reference",
+      "content": "Offshore approach reference point for Hillsboro Inlet. Use with local charts and visual aids; conditions vary with wind and tide.",
+      "tags": ["geo:26.2590,-80.0810", "geo-type:point", "geo-name:Hillsboro Inlet approach", "coastal", "navigation"]
     }
   ]
 }

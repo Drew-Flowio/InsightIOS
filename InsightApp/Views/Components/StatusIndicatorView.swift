@@ -9,6 +9,7 @@ struct StatusIndicatorView: View {
     var onOpenMinds: (() -> Void)?
     var onOpenMemory: (() -> Void)?
     var onOpenSetup: (() -> Void)?
+    var onOpenMap: (() -> Void)?
     var showsLocationIndicator: Bool = false
 
     @State private var pulse = false
@@ -55,6 +56,14 @@ struct StatusIndicatorView: View {
             }
 
             HStack(spacing: InsightSpacing.xs) {
+                if let onOpenMap {
+                    Button(action: onOpenMap) {
+                        Image(systemName: "map")
+                    }
+                    .buttonStyle(InsightIconButtonStyle())
+                    .accessibilityLabel("Map")
+                }
+
                 if let onOpenSetup {
                     Button(action: onOpenSetup) {
                         Image(systemName: "gearshape")

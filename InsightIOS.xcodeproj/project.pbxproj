@@ -40,6 +40,8 @@
 		A1000000000000000000001E /* PhotoAnalysisSourceBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001E /* PhotoAnalysisSourceBadge.swift */; };
 		A1000000000000000000001F /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001F /* LocationService.swift */; };
 		A10000000000000000000020 /* LocationContextChipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000020 /* LocationContextChipView.swift */; };
+		A10000000000000000000021 /* GeoMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000021 /* GeoMapView.swift */; };
+		A10000000000000000000022 /* GeoRecordDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000022 /* GeoRecordDetailView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -76,6 +78,8 @@
 		A2000000000000000000001E /* PhotoAnalysisSourceBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoAnalysisSourceBadge.swift; sourceTree = "<group>"; };
 		A2000000000000000000001F /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		A20000000000000000000020 /* LocationContextChipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationContextChipView.swift; sourceTree = "<group>"; };
+		A20000000000000000000021 /* GeoMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoMapView.swift; sourceTree = "<group>"; };
+		A20000000000000000000022 /* GeoRecordDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeoRecordDetailView.swift; sourceTree = "<group>"; };
 		A30000000000000000000001 /* InsightIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InsightIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -184,6 +188,8 @@
 				A2000000000000000000001A /* MemoryView.swift */,
 				A2000000000000000000001B /* PersonalityView.swift */,
 				A2000000000000000000001D /* VisionSetupView.swift */,
+				A20000000000000000000021 /* GeoMapView.swift */,
+				A20000000000000000000022 /* GeoRecordDetailView.swift */,
 				A6000000000000000000000A /* Components */,
 			);
 			path = Views;
@@ -317,6 +323,8 @@
 				A1000000000000000000001E /* PhotoAnalysisSourceBadge.swift in Sources */,
 				A1000000000000000000001F /* LocationService.swift in Sources */,
 				A10000000000000000000020 /* LocationContextChipView.swift in Sources */,
+				A10000000000000000000021 /* GeoMapView.swift in Sources */,
+				A10000000000000000000022 /* GeoRecordDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

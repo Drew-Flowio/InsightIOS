@@ -456,6 +456,10 @@ public actor InsightEngine {
         }
     }
 
+    public func listGeographicRecordsFromEnabledMinds() -> [GeographicRecord] {
+        MindBootstrap.enabledGeographicRecords(from: repository)
+    }
+
     public func setMindEnabled(mindID: String, enabled: Bool) {
         repository.setKnowledgeVolumeEnabled(id: mindID, enabled: enabled)
     }
@@ -513,6 +517,8 @@ public actor InsightEngine {
         let started = CFAbsoluteTimeGetCurrent()
 
         InsightEngineLog.info("Turn \(turnID) starting: source=\(source), recordUser=\(recordUser), existingMessages=\(sessionManager.messageCount()).")
+
+        enrichLocationContextIfNeeded()
 
         let activePrompt = repository.getActivePromptVersion()
 
@@ -781,6 +787,21 @@ public actor InsightEngine {
     private func retrieveRelevantMemory(for userQuestion: String) -> RelevantMemoryContext {
         let facts = repository.listMemoryFacts().map(\.text)
         return personalMemoryRetriever.retrieve(facts: facts, for: userQuestion)
+    }
+
+    private func enrichLocationContextIfNeeded() {
+        guard let location = locationContext else { return }
+
+        let quality = location.snapshot.resolvedQuality()
+        guard quality == .good || quality == .lowAccuracy || quality == .stale else { return }
+
+        let volumes = MindBootstrap.enabledVolumes(from: repository)
+        let nearby = NearbyGeographicMatcher.nearbyRecords(
+            from: volumes,
+            latitude: location.snapshot.latitude,
+            longitude: location.snapshot.longitude
+        )
+        locationContext = LocationContext(snapshot: location.snapshot, nearbyRecords: nearby)
     }
 
     private func retrieveRelevantKnowledge(for userQuestion: String) -> RetrievedKnowledgeContext {

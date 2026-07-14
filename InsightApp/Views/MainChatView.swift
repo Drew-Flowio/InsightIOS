@@ -21,6 +21,7 @@ struct MainChatView: View {
                     onOpenMinds: { viewModel.showMindsLibrary = true },
                     onOpenMemory: { viewModel.showMemoryScreen = true },
                     onOpenSetup: { viewModel.showVisionSetupScreen = true },
+                    onOpenMap: { viewModel.showGeoMapScreen = true },
                     showsLocationIndicator: viewModel.showsLocationIndicator
                 )
 
@@ -147,6 +148,9 @@ struct MainChatView: View {
         }
         .sheet(isPresented: $viewModel.showVisionSetupScreen) {
             VisionSetupView(viewModel: viewModel)
+        }
+        .sheet(isPresented: $viewModel.showGeoMapScreen) {
+            GeoMapView(viewModel: viewModel)
         }
         .confirmationDialog(
             "Include location for this question?",

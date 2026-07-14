@@ -16,7 +16,9 @@ final class MindImporterTests: XCTestCase {
 
         XCTAssertEqual(outcome, .imported(title: "Florida Coastal"))
         XCTAssertTrue(repository.knowledgeVolumeExists(id: "mind.florida-coastal-demo"))
-        XCTAssertEqual(repository.countKnowledgeRecords(volumeID: "mind.florida-coastal-demo"), 3)
+        XCTAssertEqual(repository.countKnowledgeRecords(volumeID: "mind.florida-coastal-demo"), 6)
+        let geoRecords = GeographicRecordParser.records(from: try BundledMinds.floridaCoastalDemoVolume())
+        XCTAssertEqual(geoRecords.count, 3)
     }
 
     func testImportRejectsDuplicateVolumeID() throws {

@@ -436,6 +436,36 @@ public final class Repository: @unchecked Sendable {
         ) ?? 0
     }
 
+    public func knowledgeRecordExists(volumeID: String, recordID: String) -> Bool {
+        queryOne(
+            "SELECT 1 FROM knowledge_records WHERE volume_id = ? AND id = ? LIMIT 1",
+            bindings: [.text(volumeID), .text(recordID)],
+            map: { _ in true }
+        ) ?? false
+    }
+
+    public func insertKnowledgeRecord(
+        volumeID: String,
+        id: String,
+        title: String,
+        content: String,
+        tags: [String]
+    ) {
+        execute(
+            """
+            INSERT INTO knowledge_records (id, volume_id, title, content, tags_json)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            bindings: [
+                .text(id),
+                .text(volumeID),
+                .text(title),
+                .text(content),
+                .text(Self.encodeJSON(tags)),
+            ]
+        )
+    }
+
     public func enabledKnowledgeVolumesWithRecords() -> [(KnowledgeVolumeRecord, [StoredKnowledgeRecord])] {
         listEnabledKnowledgeVolumes().map { volume in
             (volume, listKnowledgeRecords(volumeID: volume.id))

@@ -11,8 +11,8 @@ final class MindLibraryTests: XCTestCase {
 
         XCTAssertEqual(items.count, 1)
         XCTAssertEqual(items.first?.id, "mind.florida-coastal-demo")
-        XCTAssertEqual(items.first?.version, "1.0")
-        XCTAssertEqual(items.first?.recordCount, 3)
+        XCTAssertEqual(items.first?.version, "1.1")
+        XCTAssertEqual(items.first?.recordCount, 6)
     }
 
     func testEngineImportAndDuplicateHandling() async throws {
