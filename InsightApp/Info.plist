@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Insight</string>
+	<string>Offgrid Minds</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -23,13 +23,13 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Insight uses the camera so you can show what you're working on and get hands-on help.</string>
+	<string>Offgrid Minds uses the camera so you can show what you're working on and get hands-on help.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Insight uses the microphone for voice conversations.</string>
+	<string>Offgrid Minds uses the microphone for voice conversations.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Insight can analyze photos you choose to help with repairs, DIY, and troubleshooting.</string>
+	<string>Offgrid Minds can analyze photos you choose to help with repairs, DIY, and troubleshooting.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Insight can use your location to add offline GPS context to questions when you choose to include it.</string>
+	<string>Offgrid Minds can use your location to add offline GPS context to questions when you choose to include it.</string>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>

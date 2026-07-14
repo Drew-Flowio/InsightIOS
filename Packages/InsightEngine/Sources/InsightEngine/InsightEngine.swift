@@ -460,6 +460,19 @@ public actor InsightEngine {
         MindBootstrap.enabledGeographicRecords(from: repository)
     }
 
+    public func libraryStorageSummary() -> LibraryStorageSummary {
+        let volumes = repository.listKnowledgeVolumes()
+        let manualCount = volumes.filter { ($0.sourceLabel ?? "").contains("pdf") }.count
+        let importedDataCount = volumes.filter { ($0.sourceLabel ?? "").contains("imported.user") }.count
+        let bundledMindCount = volumes.filter { ($0.sourceLabel ?? "").contains("bundled") }.count
+        return LibraryStorageSummary(
+            totalMinds: volumes.count,
+            manualCount: manualCount,
+            importedDataCount: importedDataCount,
+            bundledMindCount: bundledMindCount
+        )
+    }
+
     public func setMindEnabled(mindID: String, enabled: Bool) {
         repository.setKnowledgeVolumeEnabled(id: mindID, enabled: enabled)
     }

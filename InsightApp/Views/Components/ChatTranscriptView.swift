@@ -1,5 +1,6 @@
 import SwiftUI
 import InsightCore
+import InsightCore
 
 struct ChatTranscriptView: View {
     let messages: [ChatDisplayMessage]

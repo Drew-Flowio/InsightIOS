@@ -25,6 +25,13 @@ enum VisionSetupState: Equatable {
     case failed(String)
 }
 
+enum VoiceSetupState: Equatable {
+    case notInstalled
+    case downloading(Double?)
+    case ready
+    case failed(String)
+}
+
 struct UserDataImportDraft: Identifiable, Equatable {
     let id = UUID()
     let data: Data
@@ -61,12 +68,22 @@ final class ChatViewModel {
     var showPersonalityScreen = false
     var showVisionSetupScreen = false
     var showGeoMapScreen = false
+    var showStorageScreen = false
+    var showDemoGuide = false
     var userDataImportDraft: UserDataImportDraft?
+    var productSetupFinished = false
     var userDataImportTitle = ""
     var selectedPhotoItem: PhotosPickerItem?
 
     private(set) var visionSetupState: VisionSetupState = .checking
+    private(set) var voiceSetupState: VoiceSetupState = .notInstalled
     private(set) var visionSetupErrorMessage: String?
+    private(set) var libraryStorageSummary = LibraryStorageSummary(
+        totalMinds: 0,
+        manualCount: 0,
+        importedDataCount: 0,
+        bundledMindCount: 0
+    )
 
     var locationPreference: LocationPreference = LocationPreferencesStore.load()
     private(set) var locationCaption: String?
@@ -95,6 +112,58 @@ final class ChatViewModel {
     private var configuration: AppConfiguration?
     private var activeTask: Task<Void, Never>?
     private let isPreviewOnly: Bool
+
+    var isVoiceReady: Bool {
+        configuration?.modelStore.isWhisperReady ?? false
+    }
+
+    var isOfflineBrainReady: Bool {
+        configuration?.modelStore.isLLMReady ?? false
+    }
+
+    var isVisionReady: Bool {
+        if case .ready = visionSetupState { return true }
+        return configuration?.modelStore.isVisionReady ?? false
+    }
+
+    var isSetupDownloading: Bool {
+        if case .downloading = bootstrapState { return true }
+        return false
+    }
+
+    var isVoiceDownloading: Bool {
+        if case .downloading = voiceSetupState { return true }
+        return false
+    }
+
+    var isVisionDownloading: Bool {
+        if case .downloading = visionSetupState { return true }
+        return false
+    }
+
+    var offlineBrainSizeLabel: String {
+        formatBytes(configuration.map { InsightModelSetup.offlineBrainDownloadBytes(for: $0) } ?? 0)
+    }
+
+    var voiceSizeLabel: String {
+        formatBytes(configuration.map { InsightModelSetup.voiceDownloadBytes(for: $0) } ?? 0)
+    }
+
+    var visionSizeLabel: String {
+        formatBytes(configuration.map { InsightModelSetup.visionDownloadBytes(for: $0) } ?? 0)
+    }
+
+    var productSetupSnapshot: ProductSetupSnapshot {
+        ProductSetupStatusBuilder.snapshot(
+            offlineBrainReady: isOfflineBrainReady,
+            voiceReady: isVoiceReady,
+            visionReady: isVisionReady,
+            locationAuthorized: locationAuthorizationState == .authorized,
+            demoMindInstalled: libraryStorageSummary.bundledMindCount > 0 || isEngineReady,
+            skippedVoice: ProductSetupStore.skippedVoice,
+            skippedVision: ProductSetupStore.skippedVision
+        )
+    }
 
     var isEngineReady: Bool {
         bootstrapState == .ready || bootstrapState == .preview
@@ -130,7 +199,7 @@ final class ChatViewModel {
         photoThumbnailURL != nil
     }
 
-    init(assistantName: String = "Insight", previewMessages: [ChatDisplayMessage]? = nil) {
+    init(assistantName: String = ProductBranding.assistantName, previewMessages: [ChatDisplayMessage]? = nil) {
         self.assistantName = assistantName
         self.isPreviewOnly = previewMessages != nil
         if let previewMessages {
@@ -144,6 +213,106 @@ final class ChatViewModel {
 
         Task {
             await runBootstrap()
+        }
+    }
+
+    func downloadOfflineBrainForSetup() {
+        guard let configuration, !isOfflineBrainReady else { return }
+
+        Task {
+            bootstrapState = .downloading(nil)
+            do {
+                _ = try await InsightModelSetup.downloadLLM(for: configuration) { [weak self] progress in
+                    Task { @MainActor in
+                        self?.bootstrapState = .downloading(progress.fractionCompleted)
+                    }
+                }
+                bootstrapState = .loadingBrain
+            } catch {
+                bootstrapState = .failed("Could not download the offline brain. Check your connection and free storage.")
+            }
+        }
+    }
+
+    func downloadVoiceForSetup() {
+        guard let configuration, !isVoiceReady else { return }
+
+        Task {
+            voiceSetupState = .downloading(nil)
+            do {
+                _ = try await InsightModelSetup.downloadWhisper(for: configuration) { [weak self] progress in
+                    Task { @MainActor in
+                        self?.voiceSetupState = .downloading(progress.fractionCompleted)
+                    }
+                }
+                voiceSetupState = .ready
+                ProductSetupStore.skippedVoice = false
+            } catch {
+                voiceSetupState = .failed("Could not download voice support.")
+            }
+        }
+    }
+
+    func skipVoiceForSetup() {
+        ProductSetupStore.skippedVoice = true
+        voiceSetupState = .notInstalled
+    }
+
+    func skipVisionForSetup() {
+        ProductSetupStore.skippedVision = true
+        visionSetupState = .notInstalled
+    }
+
+    func completeProductSetup(openDemo: Bool) {
+        Task {
+            if let configuration, isOfflineBrainReady, !isEngineReady {
+                await initializeEngine(with: configuration)
+            }
+            ProductSetupStore.markSetupCompleted(showDemoPrompt: openDemo)
+            productSetupFinished = true
+            if openDemo {
+                showDemoGuide = true
+            }
+        }
+    }
+
+    func dismissDemoGuide() {
+        showDemoGuide = false
+        ProductSetupStore.shouldShowDemoPrompt = false
+    }
+
+    func startDemoWithText() {
+        composerText = ProductBranding.demoSuggestedQuestion
+        dismissDemoGuide()
+    }
+
+    func startDemoWithVoice() {
+        composerText = ProductBranding.demoSuggestedQuestion
+        dismissDemoGuide()
+    }
+
+    func startDemoWithPhoto() {
+        composerText = ProductBranding.demoSuggestedQuestion
+        showPhotoPicker = true
+        dismissDemoGuide()
+    }
+
+    func refreshStorageSummary() async {
+        guard let engine else { return }
+        libraryStorageSummary = await engine.libraryStorageSummary()
+    }
+
+    func removeVoiceModel() {
+        guard let configuration else { return }
+
+        Task {
+            do {
+                try InsightModelSetup.removeVoiceModel(for: configuration)
+                voiceSetupState = .notInstalled
+                ProductSetupStore.skippedVoice = true
+            } catch {
+                voiceSetupState = .failed("Could not remove voice support.")
+            }
         }
     }
 
@@ -628,6 +797,7 @@ final class ChatViewModel {
         }
 
         visionSetupState = InsightModelSetup.isVisionReady(for: configuration) ? .ready : .notInstalled
+        voiceSetupState = configuration.modelStore.isWhisperReady ? .ready : .notInstalled
         visionSetupErrorMessage = nil
     }
 
@@ -670,6 +840,10 @@ final class ChatViewModel {
         }
     }
 
+    private func formatBytes(_ bytes: Int64) -> String {
+        ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+    }
+
     private func message(for outcome: MindImportOutcome) -> String {
         switch outcome {
         case .imported(let title):
@@ -695,13 +869,17 @@ final class ChatViewModel {
             } else if config.modelStore.isLLMReady, config.modelStore.isWhisperReady {
                 await initializeEngine(with: config)
             } else if config.modelStore.isLLMReady {
-                bootstrapState = .downloading(nil)
-                _ = try await InsightModelSetup.downloadWhisper(for: config) { [weak self] progress in
-                    Task { @MainActor in
-                        self?.bootstrapState = .downloading(progress.fractionCompleted)
+                if ProductSetupStore.skippedVoice {
+                    await initializeEngine(with: config)
+                } else {
+                    bootstrapState = .downloading(nil)
+                    _ = try await InsightModelSetup.downloadWhisper(for: config) { [weak self] progress in
+                        Task { @MainActor in
+                            self?.bootstrapState = .downloading(progress.fractionCompleted)
+                        }
                     }
+                    await initializeEngine(with: config)
                 }
-                await initializeEngine(with: config)
             } else {
                 bootstrapState = .needsModel
             }
@@ -727,6 +905,7 @@ final class ChatViewModel {
             }
             bootstrapState = .ready
             refreshVisionStatus()
+            await refreshStorageSummary()
         } catch {
             bootstrapState = .failed(error.localizedDescription)
         }

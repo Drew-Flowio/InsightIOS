@@ -21,7 +21,7 @@ struct SplashView: View {
     var body: some View {
         ZStack {
             if showMain {
-                MainChatView()
+                AppRootView()
                     .transition(.opacity)
             } else {
                 ZStack {

@@ -1,8 +1,9 @@
 import Foundation
+import InsightCore
 
 enum ChatPreviewData {
-    static let welcomeTitle = "Hey — I'm Insight."
-    static let welcomeSubtitle = "Ask me anything, show me a photo, or tap the mic."
+    static let welcomeTitle = "Welcome to Offgrid Minds"
+    static let welcomeSubtitle = "Try the demo, ask a question, show a photo, or tap the mic."
 
     static let sampleMessages: [ChatDisplayMessage] = [
         ChatDisplayMessage(

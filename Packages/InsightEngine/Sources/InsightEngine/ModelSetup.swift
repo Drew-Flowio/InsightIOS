@@ -64,4 +64,23 @@ public enum InsightModelSetup {
             from: configuration.modelsDirectoryURL
         )
     }
+
+    public static func removeVoiceModel(for configuration: AppConfiguration) throws {
+        try ModelDownloadService.removeWhisperModel(
+            bundle: configuration.modelBundle,
+            from: configuration.modelsDirectoryURL
+        )
+    }
+
+    public static func offlineBrainDownloadBytes(for configuration: AppConfiguration) -> Int64 {
+        configuration.modelBundle.llmDiskBytes
+    }
+
+    public static func voiceDownloadBytes(for configuration: AppConfiguration) -> Int64 {
+        configuration.modelBundle.whisperDiskBytes
+    }
+
+    public static func visionDownloadBytes(for configuration: AppConfiguration) -> Int64 {
+        configuration.modelBundle.visionDownloadBytes
+    }
 }

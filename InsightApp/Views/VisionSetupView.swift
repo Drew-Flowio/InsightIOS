@@ -96,7 +96,7 @@ struct VisionSetupView: View {
                 }
                 .scrollContentBackground(.hidden)
             }
-            .navigationTitle("Setup")
+            .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -105,10 +105,18 @@ struct VisionSetupView: View {
                     }
                     .foregroundStyle(InsightColors.textPrimary)
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Storage") {
+                        viewModel.showStorageScreen = true
+                    }
+                }
             }
             .task {
                 viewModel.refreshVisionStatus()
                 viewModel.refreshLocationStatus()
+            }
+            .sheet(isPresented: $viewModel.showStorageScreen) {
+                StorageSettingsView(viewModel: viewModel)
             }
         }
         .preferredColorScheme(.dark)

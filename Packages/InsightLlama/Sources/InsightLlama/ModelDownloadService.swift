@@ -171,6 +171,21 @@ public enum ModelDownloadService {
         }
     }
 
+    public static func removeWhisperModel(
+        bundle: ModelCatalog.ModelBundle,
+        from modelsDirectory: URL
+    ) throws {
+        let store = ModelFileStore(modelsDirectory: modelsDirectory, bundle: bundle)
+        let targets = [
+            store.whisperModelURL,
+            store.whisperModelURL.appendingPathExtension("part"),
+        ]
+
+        for url in targets where FileManager.default.fileExists(atPath: url.path) {
+            try FileManager.default.removeItem(at: url)
+        }
+    }
+
     private static func downloadFile(
         from sourceURL: URL,
         to destination: URL,

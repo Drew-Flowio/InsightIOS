@@ -69,7 +69,7 @@ struct StatusIndicatorView: View {
                         Image(systemName: "gearshape")
                     }
                     .buttonStyle(InsightIconButtonStyle())
-                    .accessibilityLabel("Setup")
+                    .accessibilityLabel("Settings")
                 }
 
                 if let onOpenPersonality {

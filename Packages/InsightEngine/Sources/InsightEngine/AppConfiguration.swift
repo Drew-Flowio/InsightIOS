@@ -137,9 +137,6 @@ public enum RuntimeServices: Sendable {
         guard store.isLLMReady else {
             throw Error.llmModelMissing(configuration.modelBundle.llmFileName)
         }
-        guard store.isWhisperReady else {
-            throw Error.whisperModelMissing(configuration.modelBundle.whisperFileName)
-        }
 
         let llm = LlamaCppLlmAdapter(
             modelPath: store.llmModelURL,
@@ -147,15 +144,24 @@ public enum RuntimeServices: Sendable {
         )
         RuntimeServicesLog.info("Startup backend selection: \(llm.backendDebugDescription)")
 
-        let stt: any SttServing = WhisperSttAdapter(modelPath: store.whisperModelURL)
-        let recorder: any AudioRecording = MicrophoneRecorder(config: configuration.audioConfig)
+        let stt: any SttServing
+        let recorder: any AudioRecording
+        if store.isWhisperReady {
+            stt = WhisperSttAdapter(modelPath: store.whisperModelURL)
+            recorder = MicrophoneRecorder(config: configuration.audioConfig)
+        } else {
+            RuntimeServicesLog.info("Whisper model not installed; voice input disabled until downloaded.")
+            stt = MockSttAdapter()
+            recorder = MockAudioRecorder()
+        }
 
         let tts = VoiceRuntimeFactory.makeTts(
             config: configuration.ttsConfig,
             modelsDirectory: configuration.modelsDirectoryURL
         )
 
-        RuntimeServicesLog.info("Startup service mode: REAL. LLM=llama.cpp, STT=Whisper, Vision=OCR+SmolVLM(when installed), Recorder=AVAudioRecorder, TTS=system/XTTS.")
+        let voiceMode = store.isWhisperReady ? "Whisper" : "disabled"
+        RuntimeServicesLog.info("Startup service mode: REAL. LLM=llama.cpp, STT=\(voiceMode), Vision=OCR+SmolVLM(when installed), Recorder=\(store.isWhisperReady ? "AVAudioRecorder" : "mock"), TTS=system/XTTS.")
 
         let vision: any VisionModelServing = CompositeVisionAnalyzer(
             modelPath: store.visionModelURL,

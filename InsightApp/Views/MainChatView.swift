@@ -1,11 +1,16 @@
 import PhotosUI
 import SwiftUI
+import InsightCore
 
 struct MainChatView: View {
     @State private var viewModel: ChatViewModel
 
-    init(previewMessages: [ChatDisplayMessage]? = nil) {
-        _viewModel = State(initialValue: ChatViewModel(previewMessages: previewMessages))
+    init(viewModel: ChatViewModel? = nil, previewMessages: [ChatDisplayMessage]? = nil) {
+        if let viewModel {
+            _viewModel = State(initialValue: viewModel)
+        } else {
+            _viewModel = State(initialValue: ChatViewModel(previewMessages: previewMessages))
+        }
     }
 
     var body: some View {
@@ -97,7 +102,7 @@ struct MainChatView: View {
                 )
             }
 
-            if !viewModel.isEngineReady {
+            if !viewModel.isEngineReady && ProductSetupStore.hasCompletedSetup {
                 ModelSetupOverlay(
                     bundle: viewModel.modelBundle,
                     state: viewModel.bootstrapState,
@@ -136,6 +141,12 @@ struct MainChatView: View {
         }
         .onAppear {
             viewModel.bootstrap()
+            if ProductSetupStore.shouldShowDemoPrompt {
+                viewModel.showDemoGuide = true
+            }
+        }
+        .sheet(isPresented: $viewModel.showDemoGuide) {
+            DemoGuideView(viewModel: viewModel)
         }
         .sheet(isPresented: $viewModel.showMindsLibrary) {
             MindsLibraryView(viewModel: viewModel)
