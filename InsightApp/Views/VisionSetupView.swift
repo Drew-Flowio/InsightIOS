@@ -1,4 +1,5 @@
 import SwiftUI
+import InsightCore
 import InsightRuntime
 
 struct VisionSetupView: View {
@@ -64,6 +65,34 @@ struct VisionSetupView: View {
                     } footer: {
                         Text(footerCopy)
                     }
+
+                    Section {
+                        Picker("Location", selection: $viewModel.locationPreference) {
+                            ForEach(LocationPreference.allCases) { preference in
+                                Text(preference.customerLabel).tag(preference)
+                            }
+                        }
+                        .onChange(of: viewModel.locationPreference) { _, newValue in
+                            viewModel.saveLocationPreference(newValue)
+                        }
+
+                        HStack {
+                            Text("Permission")
+                            Spacer()
+                            Text(viewModel.locationPermissionLabel)
+                                .foregroundStyle(InsightColors.textSecondary)
+                        }
+
+                        if viewModel.locationAuthorizationState == .notDetermined {
+                            Button("Allow Location Access") {
+                                viewModel.requestLocationPermission()
+                            }
+                        }
+                    } header: {
+                        Text("Location")
+                    } footer: {
+                        Text("Location stays on this device and is never uploaded. Coordinates are evidence only — the assistant will not invent place names from GPS alone.")
+                    }
                 }
                 .scrollContentBackground(.hidden)
             }
@@ -79,6 +108,7 @@ struct VisionSetupView: View {
             }
             .task {
                 viewModel.refreshVisionStatus()
+                viewModel.refreshLocationStatus()
             }
         }
         .preferredColorScheme(.dark)

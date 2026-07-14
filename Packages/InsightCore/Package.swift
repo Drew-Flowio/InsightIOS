@@ -22,7 +22,7 @@ let package = Package(
         ),
         .testTarget(
             name: "InsightCoreTests",
-            dependencies: ["InsightCore"]
+            dependencies: ["InsightCore", "InsightStorage"]
         ),
     ]
 )

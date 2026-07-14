@@ -49,4 +49,26 @@ final class MindKnowledgeTests: XCTestCase {
         XCTAssertTrue(messages[0].content.contains("Weak or intermittent telltale stream"))
         XCTAssertTrue(debugText.contains("KNOWLEDGE VOLUME RECORDS:"))
     }
+
+    func testGeographicTagBoostsMatchingVolumeRecord() {
+        let volume = KnowledgeVolume(
+            id: "mind.local-demo",
+            title: "Local Waters",
+            records: [
+                KnowledgeRecord(
+                    id: "rule.anchor",
+                    title: "Anchoring near channel markers",
+                    content: "Keep clear of marked channels when anchoring overnight.",
+                    tags: ["geo:26.1,-80.1", "anchoring"]
+                )
+            ]
+        )
+        let retriever = KnowledgeRetriever()
+        let result = retriever.retrieve(
+            query: "anchor rules geo:26.1,-80.1",
+            volumes: [volume]
+        )
+
+        XCTAssertEqual(result.hits.first?.recordID, "rule.anchor")
+    }
 }

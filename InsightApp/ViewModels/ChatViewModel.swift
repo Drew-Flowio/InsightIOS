@@ -54,6 +54,14 @@ final class ChatViewModel {
     private(set) var visionSetupState: VisionSetupState = .checking
     private(set) var visionSetupErrorMessage: String?
 
+    var locationPreference: LocationPreference = LocationPreferencesStore.load()
+    private(set) var locationCaption: String?
+    private(set) var locationAuthorizationState: LocationAuthorizationState = .notDetermined
+    var showLocationConfirmDialog = false
+    private var pendingSendAction: (() -> Void)?
+
+    private let locationService = LocationService()
+
     private(set) var minds: [MindLibraryItem] = []
     private(set) var mindsFeedbackMessage: String?
     private(set) var memoryFacts: [MemoryFactRecord] = []
@@ -85,6 +93,23 @@ final class ChatViewModel {
     var canSend: Bool {
         let hasQuestion = !composerText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         return hasQuestion && !isBusy && isEngineReady
+    }
+
+    var hasLocationContext: Bool {
+        locationCaption != nil
+    }
+
+    var locationPermissionLabel: String {
+        switch locationAuthorizationState {
+        case .notDetermined: "Not requested"
+        case .denied: "Denied"
+        case .authorized: "Allowed"
+        case .restricted: "Restricted"
+        }
+    }
+
+    var showsLocationIndicator: Bool {
+        locationPreference != .off && (hasLocationContext || locationAuthorizationState == .authorized)
     }
 
     var hasPhotoAttachment: Bool {
@@ -146,33 +171,106 @@ final class ChatViewModel {
         let useVoiceReply = voiceSubmissionPending
         voiceSubmissionPending = false
 
-        if useVoiceReply {
-            appendUserMessage(text)
-            haptic(.light)
-            activeTask = Task {
-                if hasPhotoAttachment {
-                    await engine.setPhotoOcrText(photoOcrText)
+        let proceed: () -> Void = { [weak self] in
+            guard let self else { return }
+            if useVoiceReply {
+                self.appendUserMessage(text)
+                self.haptic(.light)
+                self.activeTask = Task {
+                    if self.hasPhotoAttachment {
+                        await engine.setPhotoOcrText(self.photoOcrText)
+                    }
+                    await self.performVoiceReplyTurn(engine: engine, text: text)
                 }
-                await performVoiceReplyTurn(engine: engine, text: text)
+                return
             }
-            return
+
+            if self.hasPhotoAttachment {
+                self.appendUserMessage(text)
+                self.haptic(.light)
+                self.activeTask = Task {
+                    await self.performPhotoQuestionTurn(engine: engine, text: text)
+                }
+                return
+            }
+
+            self.appendUserMessage(text)
+            self.haptic(.light)
+            self.activeTask = Task {
+                await self.performTextTurn(engine: engine, text: text)
+            }
         }
 
-        if hasPhotoAttachment {
-            appendUserMessage(text)
-            haptic(.light)
+        switch locationPreference {
+        case .off:
+            locationCaption = nil
+            Task { await engine.clearLocationContext() }
+            proceed()
+        case .on:
             activeTask = Task {
-                await performPhotoQuestionTurn(engine: engine, text: text)
+                await self.attachLocationForTurn(engine: engine)
+                proceed()
             }
-            return
+        case .askEachTime:
+            pendingSendAction = proceed
+            showLocationConfirmDialog = true
         }
+    }
 
-        appendUserMessage(text)
-        haptic(.light)
+    func confirmLocationForPendingSend(includeLocation: Bool) {
+        showLocationConfirmDialog = false
+        guard let engine, let action = pendingSendAction else { return }
+        pendingSendAction = nil
 
         activeTask = Task {
-            await performTextTurn(engine: engine, text: text)
+            if includeLocation {
+                await self.attachLocationForTurn(engine: engine)
+            } else {
+                self.locationCaption = nil
+                await engine.clearLocationContext()
+            }
+            action()
         }
+    }
+
+    func clearLocationContext() {
+        locationCaption = nil
+        guard let engine else { return }
+        Task {
+            await engine.clearLocationContext()
+        }
+    }
+
+    func refreshLocationStatus() {
+        locationService.refreshAuthorizationState()
+        locationAuthorizationState = locationService.authorizationState
+        locationPreference = LocationPreferencesStore.load()
+    }
+
+    func saveLocationPreference(_ preference: LocationPreference) {
+        locationPreference = preference
+        LocationPreferencesStore.save(preference)
+        if preference == .off {
+            clearLocationContext()
+        }
+    }
+
+    func requestLocationPermission() {
+        locationService.requestWhenInUseAuthorization()
+        refreshLocationStatus()
+    }
+
+    private func attachLocationForTurn(engine: InsightEngine) async {
+        let snapshot = await locationService.captureSnapshot()
+        guard snapshot.quality != .denied, snapshot.quality != .unavailable else {
+            locationCaption = nil
+            await engine.clearLocationContext()
+            return
+        }
+
+        let context = LocationContext(snapshot: snapshot)
+        locationCaption = context.caption
+        await engine.setLocationContext(context)
     }
 
     func toggleVoice() {
@@ -592,6 +690,7 @@ final class ChatViewModel {
                 }
             )
             finalizeStreamingMessage(id: streamID)
+            locationCaption = nil
             await reloadHistory(from: engine)
             haptic(.soft)
         } catch {
@@ -621,6 +720,7 @@ final class ChatViewModel {
                 }
             )
             finalizeStreamingMessage(id: streamID)
+            locationCaption = nil
             await reloadHistory(from: engine)
             haptic(.soft)
         } catch {
@@ -648,6 +748,7 @@ final class ChatViewModel {
                 onState: voiceStateHandler
             )
             finalizeStreamingMessage(id: streamID)
+            locationCaption = nil
             await reloadHistory(from: engine)
             haptic(.success)
         } catch {
@@ -696,13 +797,33 @@ final class ChatViewModel {
     private func reloadHistory(from engine: InsightEngine) async {
         let records = await engine.getHistory()
         let sourcesByMessage = await engine.getKnowledgeSourcesByMessageID()
-        messages = records.compactMap { mapRecord($0, sourcesByMessage: sourcesByMessage) }
+        var pendingLocationFootnote: String?
+
+        messages = records.compactMap { record in
+            if record.role == "user", let footnote = locationResponseFootnote(from: record.locationJSON) {
+                pendingLocationFootnote = footnote
+            }
+
+            let message = mapRecord(
+                record,
+                sourcesByMessage: sourcesByMessage,
+                assistantLocationLabel: record.role == "assistant" ? pendingLocationFootnote : nil
+            )
+
+            if record.role == "assistant" {
+                pendingLocationFootnote = nil
+            }
+
+            return message
+        }
     }
 
     private func mapRecord(
         _ record: MessageRecord,
-        sourcesByMessage: [String: [KnowledgeSourceAttribution]]
+        sourcesByMessage: [String: [KnowledgeSourceAttribution]],
+        assistantLocationLabel: String? = nil
     ) -> ChatDisplayMessage? {
+        let locationLabel = locationLabel(from: record.locationJSON)
         switch record.role {
         case "user":
             if record.source == "photo", let imagePath = record.imagePath {
@@ -711,7 +832,8 @@ final class ChatViewModel {
                     role: .photo,
                     content: record.content,
                     timestamp: parseTimestamp(record.timestamp),
-                    imageURL: URL(fileURLWithPath: imagePath)
+                    imageURL: URL(fileURLWithPath: imagePath),
+                    locationLabel: locationLabel
                 )
             }
             if record.content.hasPrefix("📷 Photo attached") {
@@ -728,7 +850,8 @@ final class ChatViewModel {
                 id: record.id,
                 role: .user,
                 content: record.content,
-                timestamp: parseTimestamp(record.timestamp)
+                timestamp: parseTimestamp(record.timestamp),
+                locationLabel: locationLabel
             )
         case "assistant":
             let sources = (sourcesByMessage[record.id] ?? []).map {
@@ -744,11 +867,26 @@ final class ChatViewModel {
                 role: .assistant,
                 content: record.content,
                 timestamp: parseTimestamp(record.timestamp),
-                knowledgeSources: sources
+                knowledgeSources: sources,
+                locationLabel: assistantLocationLabel
             )
         default:
             return nil
         }
+    }
+
+    private func locationLabel(from json: String?) -> String? {
+        guard let json, let snapshot = LocationSnapshotCodec.decode(json) else { return nil }
+        let quality = snapshot.resolvedQuality()
+        guard quality != .denied, quality != .unavailable else { return nil }
+        return LocationContext(snapshot: snapshot).caption
+    }
+
+    private func locationResponseFootnote(from json: String?) -> String? {
+        guard let json, let snapshot = LocationSnapshotCodec.decode(json) else { return nil }
+        let quality = snapshot.resolvedQuality()
+        guard quality != .denied, quality != .unavailable else { return nil }
+        return LocationContext(snapshot: snapshot).responseFootnote
     }
 
     private func parseTimestamp(_ value: String) -> Date {

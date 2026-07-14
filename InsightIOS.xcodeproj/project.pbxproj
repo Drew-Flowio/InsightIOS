@@ -38,6 +38,8 @@
 		A1000000000000000000001B /* PersonalityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001B /* PersonalityView.swift */; };
 		A1000000000000000000001D /* VisionSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001D /* VisionSetupView.swift */; };
 		A1000000000000000000001E /* PhotoAnalysisSourceBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001E /* PhotoAnalysisSourceBadge.swift */; };
+		A1000000000000000000001F /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001F /* LocationService.swift */; };
+		A10000000000000000000020 /* LocationContextChipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000020 /* LocationContextChipView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -72,6 +74,8 @@
 		A2000000000000000000001B /* PersonalityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalityView.swift; sourceTree = "<group>"; };
 		A2000000000000000000001D /* VisionSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisionSetupView.swift; sourceTree = "<group>"; };
 		A2000000000000000000001E /* PhotoAnalysisSourceBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoAnalysisSourceBadge.swift; sourceTree = "<group>"; };
+		A2000000000000000000001F /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		A20000000000000000000020 /* LocationContextChipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationContextChipView.swift; sourceTree = "<group>"; };
 		A30000000000000000000001 /* InsightIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InsightIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -104,6 +108,7 @@
 				A60000000000000000000006 /* Models */,
 				A60000000000000000000007 /* Preview */,
 				A60000000000000000000008 /* ViewModels */,
+				A6000000000000000000000B /* Services */,
 				A60000000000000000000009 /* Views */,
 				A20000000000000000000014 /* Assets.xcassets */,
 				A20000000000000000000015 /* Info.plist */,
@@ -163,6 +168,14 @@
 			path = ViewModels;
 			sourceTree = "<group>";
 		};
+		A6000000000000000000000B /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A2000000000000000000001F /* LocationService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
 		A60000000000000000000009 /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -193,6 +206,7 @@
 				A20000000000000000000019 /* PhotoOcrEditView.swift */,
 				A2000000000000000000001C /* PhotoObservationsView.swift */,
 				A2000000000000000000001E /* PhotoAnalysisSourceBadge.swift */,
+				A20000000000000000000020 /* LocationContextChipView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -301,6 +315,8 @@
 				A1000000000000000000001B /* PersonalityView.swift in Sources */,
 				A1000000000000000000001D /* VisionSetupView.swift in Sources */,
 				A1000000000000000000001E /* PhotoAnalysisSourceBadge.swift in Sources */,
+				A1000000000000000000001F /* LocationService.swift in Sources */,
+				A10000000000000000000020 /* LocationContextChipView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

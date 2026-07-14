@@ -9,7 +9,16 @@ public struct KnowledgeRetriever: Sendable {
         volumes: [KnowledgeVolume],
         maxResults: Int = 4
     ) -> RetrievedKnowledgeContext {
-        let queryTokens = keywords(in: query)
+        let queryGeoTags = geoTags(in: query)
+        var queryTokens = keywords(in: query)
+        for geoTag in queryGeoTags {
+            queryTokens.insert(geoTag)
+            let value = String(geoTag.dropFirst(4))
+            queryTokens.insert(value)
+            for part in value.split(separator: ",") {
+                queryTokens.insert(String(part))
+            }
+        }
         guard !queryTokens.isEmpty else { return RetrievedKnowledgeContext() }
 
         var scored: [(KnowledgeSourceAttribution, Int)] = []
@@ -57,8 +66,35 @@ public struct KnowledgeRetriever: Sendable {
         let tagOverlap = queryTokens.intersection(tagTokens).count * 3
         let volumeTagOverlap = queryTokens.intersection(volumeTags).count
         let contentOverlap = queryTokens.intersection(contentTokens).count
+        let geographicOverlap = geographicScore(
+            recordTags: tagTokens,
+            volumeTags: volumeTags,
+            queryTokens: queryTokens
+        )
 
-        return titleOverlap + tagOverlap + volumeTagOverlap + contentOverlap
+        return titleOverlap + tagOverlap + volumeTagOverlap + contentOverlap + geographicOverlap
+    }
+
+    private func geographicScore(
+        recordTags: Set<String>,
+        volumeTags: Set<String>,
+        queryTokens: Set<String>
+    ) -> Int {
+        let geoTags = (recordTags.union(volumeTags)).filter { $0.hasPrefix("geo:") }
+        guard !geoTags.isEmpty else { return 0 }
+
+        var score = 0
+        for geoTag in geoTags {
+            let value = String(geoTag.dropFirst(4))
+            if queryTokens.contains(value) || queryTokens.contains(geoTag) {
+                score += 5
+            }
+            let parts = value.split(separator: ",").map(String.init)
+            if parts.count == 2, queryTokens.contains(parts[0]) || queryTokens.contains(parts[1]) {
+                score += 2
+            }
+        }
+        return score
     }
 
     private func attributedExcerpt(for record: KnowledgeRecord) -> String {
@@ -78,6 +114,32 @@ public struct KnowledgeRetriever: Sendable {
         let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.count > limit else { return trimmed }
         return String(trimmed.prefix(limit)).trimmingCharacters(in: .whitespacesAndNewlines) + "..."
+    }
+
+    private func geoTags(in text: String) -> Set<String> {
+        var tags = Set<String>()
+        let lowered = text.lowercased()
+        var searchStart = lowered.startIndex
+
+        while searchStart < lowered.endIndex {
+            guard let geoRange = lowered[searchStart...].range(of: "geo:") else { break }
+            let tagStart = geoRange.lowerBound
+            var tagEnd = geoRange.upperBound
+
+            while tagEnd < lowered.endIndex {
+                let character = lowered[tagEnd]
+                if character.isLetter || character.isNumber || character == "." || character == "," || character == "-" {
+                    tagEnd = lowered.index(after: tagEnd)
+                } else {
+                    break
+                }
+            }
+
+            tags.insert(String(lowered[tagStart..<tagEnd]))
+            searchStart = tagEnd
+        }
+
+        return tags
     }
 
     private func keywords(in text: String) -> Set<String> {

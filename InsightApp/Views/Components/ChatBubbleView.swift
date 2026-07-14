@@ -74,6 +74,12 @@ struct ChatBubbleView: View {
             if message.isAssistant, !message.knowledgeSources.isEmpty {
                 KnowledgeSourcesSection(sources: message.knowledgeSources, isExpanded: $showsSources)
             }
+
+            if let locationLabel = message.locationLabel, !locationLabel.isEmpty {
+                Label(locationLabel, systemImage: "location")
+                    .font(InsightTypography.micro())
+                    .foregroundStyle(InsightColors.textTertiary)
+            }
         }
         .padding(.horizontal, InsightSpacing.md)
         .padding(.vertical, InsightSpacing.sm)

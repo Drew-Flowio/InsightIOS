@@ -21,6 +21,7 @@ Architecture requirements live in [VISION_LAYER.md](./VISION_LAYER.md).
 | v2.0 | SmolVLM visual-reasoning prototype merged with OCR before Phi-4 |
 | v2.1 | One-tap Vision Reasoning setup — download, validate, remove, photo source badge |
 | v2.2 | Model runtime coordination — RAM tiers, queued residency, Whisper/VLM/Phi-4 unload order |
+| v2.3 | Offline GPS location context — permission, prompt block, retrieval boost, persistence |
 
 ---
 
@@ -64,7 +65,8 @@ Architecture requirements live in [VISION_LAYER.md](./VISION_LAYER.md).
 - Image embeddings index
 - Full SmolVLM production UX without VIS-EVAL-0 gate
 - Fish ID production models before eval fixtures exist
-- GPS / map tile reasoning
+- Live weather, network lookups, turn-by-turn navigation, chartplotter UI
+- NOAA/FWC/USCG integrations, SOS, LoRa, geofencing, background tracking, location history
 
 ---
 

@@ -18,12 +18,17 @@ public struct SessionManager: Sendable {
     }
 
     @discardableResult
-    public mutating func recordUserMessage(text: String, source: String = "text") -> MessageRecord {
+    public mutating func recordUserMessage(
+        text: String,
+        source: String = "text",
+        locationJSON: String? = nil
+    ) -> MessageRecord {
         repository.addMessage(
             sessionID: currentSession.id,
             role: "user",
             content: text,
-            source: source
+            source: source,
+            locationJSON: locationJSON
         )
     }
 
@@ -32,7 +37,8 @@ public struct SessionManager: Sendable {
         question: String,
         imagePath: String,
         ocrText: String,
-        visualObservationsJSON: String? = nil
+        visualObservationsJSON: String? = nil,
+        locationJSON: String? = nil
     ) -> MessageRecord {
         repository.addMessage(
             sessionID: currentSession.id,
@@ -41,7 +47,8 @@ public struct SessionManager: Sendable {
             source: "photo",
             imagePath: imagePath,
             ocrText: ocrText,
-            visualObservationsJSON: visualObservationsJSON
+            visualObservationsJSON: visualObservationsJSON,
+            locationJSON: locationJSON
         )
     }
 

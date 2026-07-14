@@ -9,6 +9,7 @@ struct StatusIndicatorView: View {
     var onOpenMinds: (() -> Void)?
     var onOpenMemory: (() -> Void)?
     var onOpenSetup: (() -> Void)?
+    var showsLocationIndicator: Bool = false
 
     @State private var pulse = false
 
@@ -45,6 +46,13 @@ struct StatusIndicatorView: View {
             }
 
             Spacer()
+
+            if showsLocationIndicator {
+                Image(systemName: "location.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(InsightColors.accent.opacity(0.85))
+                    .accessibilityLabel("Location enabled")
+            }
 
             HStack(spacing: InsightSpacing.xs) {
                 if let onOpenSetup {

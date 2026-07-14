@@ -43,6 +43,7 @@ public struct RelevantMemoryContext: Sendable, Equatable {
 public struct AgentPromptInput: Sendable, Equatable {
     public let userQuestion: String
     public let imageDescription: String?
+    public let locationDescription: String?
     public let userProfile: UserProfileContext
     public let relevantMemory: RelevantMemoryContext
     public let retrievedKnowledge: RetrievedKnowledgeContext
@@ -53,6 +54,7 @@ public struct AgentPromptInput: Sendable, Equatable {
     public init(
         userQuestion: String,
         imageDescription: String?,
+        locationDescription: String? = nil,
         userProfile: UserProfileContext = UserProfileContext(),
         relevantMemory: RelevantMemoryContext,
         retrievedKnowledge: RetrievedKnowledgeContext = RetrievedKnowledgeContext(),
@@ -62,6 +64,7 @@ public struct AgentPromptInput: Sendable, Equatable {
     ) {
         self.userQuestion = userQuestion
         self.imageDescription = imageDescription
+        self.locationDescription = locationDescription
         self.userProfile = userProfile
         self.relevantMemory = relevantMemory
         self.retrievedKnowledge = retrievedKnowledge
@@ -92,6 +95,7 @@ public struct PromptBuilder: Sendable {
         personalityPrompt: String
     ) -> (messages: [ChatMessage], debugText: String) {
         let imageBlock = cleanBlock(input.imageDescription) ?? "No image provided."
+        let locationBlock = cleanBlock(input.locationDescription) ?? "No location provided."
         let profileBlock = input.userProfile.promptBlock()
         let memoryBlock = input.relevantMemory.promptBlock()
         let knowledgeBlock = input.retrievedKnowledge.promptBlock()
@@ -110,6 +114,9 @@ public struct PromptBuilder: Sendable {
         IMAGE CONTEXT:
         \(imageBlock)
 
+        LOCATION CONTEXT:
+        \(locationBlock)
+
         USER PROFILE:
         \(profileBlock)
 
@@ -124,6 +131,7 @@ public struct PromptBuilder: Sendable {
 
         WHILE ANSWERING THIS TURN:
         - Use the image description as evidence, not imagination.
+        - Use location context as approximate GPS evidence only. Do not invent place names from coordinates alone.
         - Use the user profile and saved personal memories only when they help the current question.
         - Use knowledge volume records as reference material when relevant; do not invent facts beyond them.
         - Do not treat knowledge volume records or manuals as personal memories.

@@ -21,6 +21,7 @@ struct ChatDisplayMessage: Identifiable, Equatable, Sendable {
     var isStreaming: Bool
     var imageURL: URL?
     var knowledgeSources: [KnowledgeSourceDisplay]
+    var locationLabel: String?
 
     init(
         id: String = UUID().uuidString,
@@ -29,7 +30,8 @@ struct ChatDisplayMessage: Identifiable, Equatable, Sendable {
         timestamp: Date = Date(),
         isStreaming: Bool = false,
         imageURL: URL? = nil,
-        knowledgeSources: [KnowledgeSourceDisplay] = []
+        knowledgeSources: [KnowledgeSourceDisplay] = [],
+        locationLabel: String? = nil
     ) {
         self.id = id
         self.role = role
@@ -38,6 +40,7 @@ struct ChatDisplayMessage: Identifiable, Equatable, Sendable {
         self.isStreaming = isStreaming
         self.imageURL = imageURL
         self.knowledgeSources = knowledgeSources
+        self.locationLabel = locationLabel
     }
 
     var isUser: Bool { role == .user }

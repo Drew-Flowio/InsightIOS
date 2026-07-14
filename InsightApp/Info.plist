@@ -28,6 +28,8 @@
 	<string>Insight uses the microphone for voice conversations.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Insight can analyze photos you choose to help with repairs, DIY, and troubleshooting.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Insight can use your location to add offline GPS context to questions when you choose to include it.</string>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>

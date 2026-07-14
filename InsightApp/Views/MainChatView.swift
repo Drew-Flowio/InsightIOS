@@ -20,7 +20,8 @@ struct MainChatView: View {
                     onOpenPersonality: { viewModel.showPersonalityScreen = true },
                     onOpenMinds: { viewModel.showMindsLibrary = true },
                     onOpenMemory: { viewModel.showMemoryScreen = true },
-                    onOpenSetup: { viewModel.showVisionSetupScreen = true }
+                    onOpenSetup: { viewModel.showVisionSetupScreen = true },
+                    showsLocationIndicator: viewModel.showsLocationIndicator
                 )
 
                 ChatTranscriptView(
@@ -65,6 +66,14 @@ struct MainChatView: View {
                         thumbnailURL: viewModel.photoThumbnailURL
                     ) {
                         viewModel.clearPhotoContext()
+                    }
+                    .padding(.horizontal, InsightSpacing.md)
+                    .padding(.bottom, InsightSpacing.xs)
+                }
+
+                if let caption = viewModel.locationCaption {
+                    LocationContextChipView(caption: caption) {
+                        viewModel.clearLocationContext()
                     }
                     .padding(.horizontal, InsightSpacing.md)
                     .padding(.bottom, InsightSpacing.xs)
@@ -138,6 +147,20 @@ struct MainChatView: View {
         }
         .sheet(isPresented: $viewModel.showVisionSetupScreen) {
             VisionSetupView(viewModel: viewModel)
+        }
+        .confirmationDialog(
+            "Include location for this question?",
+            isPresented: $viewModel.showLocationConfirmDialog,
+            titleVisibility: .visible
+        ) {
+            Button("Include Location") {
+                viewModel.confirmLocationForPendingSend(includeLocation: true)
+            }
+            Button("Don't Include", role: .cancel) {
+                viewModel.confirmLocationForPendingSend(includeLocation: false)
+            }
+        } message: {
+            Text("Your coordinates stay on this device and help with local context. No place names are guessed from GPS alone.")
         }
     }
 

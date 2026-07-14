@@ -23,6 +23,7 @@ public actor InsightEngine {
     private let llmBackendDebugDescription: String
 
     private var visualContext: VisualContext?
+    private var locationContext: LocationContext?
     private var runtimeNotice: String?
     private let cancelToken = CancellationToken()
     private var currentState: AppState = .idle
@@ -250,6 +251,18 @@ public actor InsightEngine {
     public func setPhotoOcrText(_ text: String) {
         guard let context = visualContext else { return }
         visualContext = context.withEditedOcr(text)
+    }
+
+    public func getLocationContext() -> LocationContext? {
+        locationContext
+    }
+
+    public func setLocationContext(_ context: LocationContext?) {
+        locationContext = context
+    }
+
+    public func clearLocationContext() {
+        locationContext = nil
     }
 
     public func attachPhoto(
@@ -504,6 +517,7 @@ public actor InsightEngine {
         let activePrompt = repository.getActivePromptVersion()
 
         if recordUser {
+            let locationJSON = locationContext.flatMap { LocationSnapshotCodec.encode($0.snapshot) }
             if let context = visualContext, source == "photo" {
                 let observationsJSON = context.analysis.visualObservations.flatMap {
                     VisualObservationsParser().encodeJSON($0)
@@ -512,10 +526,15 @@ public actor InsightEngine {
                     question: utterance,
                     imagePath: context.imagePath,
                     ocrText: context.analysis.resolvedOcrText(edited: context.editedOcrText),
-                    visualObservationsJSON: observationsJSON
+                    visualObservationsJSON: observationsJSON,
+                    locationJSON: locationJSON
                 )
             } else {
-                _ = sessionManager.recordUserMessage(text: utterance, source: source)
+                _ = sessionManager.recordUserMessage(
+                    text: utterance,
+                    source: source,
+                    locationJSON: locationJSON
+                )
             }
             InsightEngineLog.info("Turn \(turnID) user message persisted.")
         }
@@ -543,6 +562,7 @@ public actor InsightEngine {
             AgentPromptInput(
                 userQuestion: utterance,
                 imageDescription: visualContext?.promptBlock(),
+                locationDescription: locationContext?.promptBlock(),
                 userProfile: userProfile,
                 relevantMemory: relevantMemory,
                 retrievedKnowledge: retrievedKnowledge,
@@ -632,8 +652,10 @@ public actor InsightEngine {
             promptVersionID: activePrompt?.id,
             assembledPromptDebug: debugText,
             imageCaption: visualContext?.promptBlock(),
+            locationCaption: locationContext?.responseFootnote,
             knowledgeSources: retrievedKnowledge.hits
         )
+        locationContext = nil
         InsightEngineLog.info("Turn \(turnID) result built; returning to caller.")
         return result
     }
@@ -763,15 +785,26 @@ public actor InsightEngine {
 
     private func retrieveRelevantKnowledge(for userQuestion: String) -> RetrievedKnowledgeContext {
         let volumes = MindBootstrap.enabledVolumes(from: repository)
-        let query: String
+        var queryParts = [userQuestion]
+
         if let context = visualContext {
-            query = context.analysis.retrievalQuery(
-                userQuestion: userQuestion,
-                editedOcr: context.editedOcrText
+            queryParts.append(
+                context.analysis.retrievalQuery(
+                    userQuestion: userQuestion,
+                    editedOcr: context.editedOcrText
+                )
             )
-        } else {
-            query = userQuestion
         }
+
+        if let location = locationContext {
+            queryParts.append(location.retrievalQuery(userQuestion: userQuestion))
+        }
+
+        let query = queryParts
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+
         return knowledgeRetriever.retrieve(query: query, volumes: volumes)
     }
 
@@ -787,6 +820,7 @@ public actor InsightEngine {
         let llmConfig = configuration.llmConfig
         InsightEngineLog.info("Turn \(turnID) user question: \(userQuestion)")
         InsightEngineLog.info("Turn \(turnID) image description: \(imageDescription ?? "No image provided.")")
+        InsightEngineLog.info("Turn \(turnID) location context: \(locationContext?.caption ?? "No location provided.")")
         InsightEngineLog.info("Turn \(turnID) profile used: \(userProfile.promptBlock())")
         InsightEngineLog.info("Turn \(turnID) memory used: \(relevantMemory.promptBlock())")
         InsightEngineLog.info("Turn \(turnID) knowledge used: \(retrievedKnowledge.hits.map(\.recordTitle).joined(separator: ", "))")
