@@ -16,12 +16,14 @@ public actor InsightEngine {
     private let llm: any LlmServing
     private let stt: any SttServing
     private let tts: any TtsServing
-    private let vision: (any VisionServing)?
+    private let vision: (any VisionModelServing)?
     private let recorder: any AudioRecording
+    private let runtimeCoordinator: ModelRuntimeCoordinator
     private let onDeviceLLMEnabled: Bool
     private let llmBackendDebugDescription: String
 
     private var visualContext: VisualContext?
+    private var runtimeNotice: String?
     private let cancelToken = CancellationToken()
     private var currentState: AppState = .idle
     private var turnCounter = 0
@@ -54,6 +56,12 @@ public actor InsightEngine {
         self.tts = services.tts
         self.vision = services.vision
         self.recorder = services.recorder
+        self.runtimeCoordinator = ModelRuntimeCoordinator(
+            policy: configuration.residencyPolicy,
+            llm: services.llm,
+            stt: services.stt,
+            vision: services.vision
+        )
         self.onDeviceLLMEnabled = services.usesOnDeviceLLM
         self.llmBackendDebugDescription = services.llmBackendDebugDescription
         InsightEngineLog.info(services.llmBackendDebugDescription)
@@ -72,10 +80,18 @@ public actor InsightEngine {
     }
 
     public func prepareRuntime() async throws {
-        InsightEngineLog.info("Preparing LLM runtime; STT is deferred until voice capture to avoid concurrent heavy model residency.")
-        try await llm.prepare()
+        let tier = configuration.residencyPolicy.tierLabel
+        InsightEngineLog.info("Preparing runtime for \(tier) memory tier; STT and vision load on demand.")
+        if configuration.residencyPolicy.preloadsLLMAtBootstrap {
+            try await runtimeCoordinator.acquireLLM()
+        }
         try await tts.prepare()
         InsightEngineLog.info("Runtime prepare complete.")
+    }
+
+    public func consumeRuntimeNotice() -> String? {
+        defer { runtimeNotice = nil }
+        return runtimeNotice
     }
 
     // MARK: - Text
@@ -146,8 +162,20 @@ public actor InsightEngine {
         await setState(.transcribing, notify: onState)
         defer { try? FileManager.default.removeItem(at: audioURL) }
 
+        try await runtimeCoordinator.acquireSTT()
+
         InsightEngineLog.info("Voice flow: sending captured audio to REAL Whisper transcription.")
-        let transcript = try await stt.transcribe(audioURL: audioURL)
+        let transcript: String
+        do {
+            transcript = try await stt.transcribe(audioURL: audioURL)
+        } catch {
+            await runtimeCoordinator.releaseSTT()
+            throw error
+        }
+
+        if configuration.residencyPolicy.tier != .high {
+            await runtimeCoordinator.releaseSTT()
+        }
         InsightEngineLog.info("Voice flow: Whisper transcript: \(transcript)")
 
         let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -228,7 +256,7 @@ public actor InsightEngine {
         sourceURL: URL,
         onState: (@Sendable (AppState) -> Void)? = nil
     ) async throws -> VisualContext {
-        guard let vision else {
+        guard vision != nil else {
             throw InsightEngineError.visionUnavailable
         }
 
@@ -236,14 +264,34 @@ public actor InsightEngine {
         await setState(.analyzing, notify: onState)
 
         let storedURL = try persistPhoto(from: sourceURL)
-        let context = try await analyzeImage(at: storedURL, using: vision)
+        var includeVisualReasoning = true
+        var acquiredVision = false
+
+        do {
+            try await runtimeCoordinator.acquireVision()
+            acquiredVision = true
+        } catch let error as ModelRuntimeCoordinator.Error {
+            includeVisualReasoning = false
+            runtimeNotice = error.localizedDescription
+        }
+
+        let context = try await analyzeImage(
+            at: storedURL,
+            includeVisualReasoning: includeVisualReasoning
+        )
         visualContext = context
+
+        if acquiredVision {
+            await runtimeCoordinator.releaseVision()
+        }
+
+        if let notice = await runtimeCoordinator.consumeNotice() {
+            runtimeNotice = notice
+        }
 
         await setState(.idle, notify: onState)
         return context
     }
-
-    // MARK: - Cancellation
 
     public func cancelCurrent() async {
         if await recorder.isRecording {
@@ -251,6 +299,7 @@ public actor InsightEngine {
         }
         cancelToken.cancel()
         await tts.stop()
+        await runtimeCoordinator.evictAllHeavyModels()
     }
 
     // MARK: - Personality
@@ -515,8 +564,8 @@ public actor InsightEngine {
         )
 
         await setState(.thinking, notify: onState)
-        InsightEngineLog.info("Turn \(turnID) state set to thinking; unloading STT before LLM generation if loaded.")
-        await stt.unload()
+        InsightEngineLog.info("Turn \(turnID) acquiring LLM with runtime coordination.")
+        try await runtimeCoordinator.acquireLLM()
 
         let token = cancelToken
         let streamAccumulator = StreamAccumulator()
@@ -541,12 +590,15 @@ public actor InsightEngine {
                 shouldCancel: { token.isCancelled }
             )
         } catch {
+            await runtimeCoordinator.releaseLLMAfterTurnIfNeeded()
             if token.isCancelled {
                 rawReplyText = streamAccumulator.text
             } else {
                 throw error
             }
         }
+
+        await runtimeCoordinator.releaseLLMAfterTurnIfNeeded()
 
         InsightEngineLog.info("Turn \(turnID) raw model response: \(rawReplyText)")
         InsightEngineLog.info("Turn \(turnID) LLM generation returned: chars=\(rawReplyText.count), cancelled=\(token.isCancelled).")
@@ -586,8 +638,15 @@ public actor InsightEngine {
         return result
     }
 
-    private func analyzeImage(at imageURL: URL, using vision: any VisionServing) async throws -> VisualContext {
-        var analysis = try await vision.analyzePhoto(at: imageURL)
+    private func analyzeImage(at imageURL: URL, includeVisualReasoning: Bool) async throws -> VisualContext {
+        guard let vision else {
+            throw InsightEngineError.visionUnavailable
+        }
+
+        var analysis = try await vision.analyzePhoto(
+            at: imageURL,
+            includeVisualReasoning: includeVisualReasoning
+        )
         if analysis.imagePath != imageURL.path {
             analysis = PhotoAnalysisResult(
                 imagePath: imageURL.path,

@@ -40,11 +40,18 @@ public struct LlmRuntimeConfig: Sendable, Equatable {
 
 public protocol LlmServing: Sendable {
     func prepare() async throws
+    func unload() async
+    var isLoaded: Bool { get async }
     func generate(
         messages: [ChatMessage],
         onToken: (@Sendable (String) -> Void)?,
         shouldCancel: (@Sendable () -> Bool)?
     ) async throws -> String
+}
+
+public extension LlmServing {
+    func unload() async {}
+    var isLoaded: Bool { get async { false } }
 }
 
 // MARK: - Speech-to-text
@@ -65,10 +72,12 @@ public protocol SttServing: Sendable {
     func prepare() async throws
     func transcribe(audioURL: URL) async throws -> String
     func unload() async
+    var isLoaded: Bool { get async }
 }
 
 public extension SttServing {
     func unload() async {}
+    var isLoaded: Bool { get async { false } }
 }
 
 // MARK: - Text-to-speech
@@ -135,6 +144,28 @@ public struct VisionRuntimeConfig: Sendable, Equatable {
 public protocol VisionServing: Sendable {
     func analyzePhoto(at imageURL: URL) async throws -> PhotoAnalysisResult
     func describeImage(at imageURL: URL) async throws -> String
+}
+
+public protocol VisionModelServing: VisionServing {
+    func prepare() async throws
+    func unload() async
+    var isLoaded: Bool { get async }
+    var supportsVisualReasoning: Bool { get async }
+    func analyzePhoto(at imageURL: URL, includeVisualReasoning: Bool) async throws -> PhotoAnalysisResult
+}
+
+public extension VisionModelServing {
+    func prepare() async throws {}
+    func unload() async {}
+    var isLoaded: Bool { get async { false } }
+    var supportsVisualReasoning: Bool { get async { false } }
+
+    func analyzePhoto(at imageURL: URL, includeVisualReasoning: Bool) async throws -> PhotoAnalysisResult {
+        if includeVisualReasoning {
+            return try await analyzePhoto(at: imageURL)
+        }
+        return try await analyzePhoto(at: imageURL)
+    }
 }
 
 // MARK: - Audio capture

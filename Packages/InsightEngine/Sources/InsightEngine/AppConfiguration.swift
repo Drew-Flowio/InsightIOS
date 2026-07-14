@@ -7,6 +7,7 @@ import InsightWhisper
 public struct AppConfiguration: Sendable {
     public let mockMode: Bool
     public let modelBundle: ModelCatalog.ModelBundle
+    public let residencyPolicy: ModelResidencyPolicy
     public let historyTurnsInPrompt: Int
     public let assistantName: String
     public let databaseURL: URL
@@ -17,6 +18,7 @@ public struct AppConfiguration: Sendable {
     public init(
         mockMode: Bool = false,
         modelBundle: ModelCatalog.ModelBundle = ModelCatalog.primary,
+        residencyPolicy: ModelResidencyPolicy = ModelResidencyPolicy.current(),
         historyTurnsInPrompt: Int = 8,
         assistantName: String = "Insight",
         databaseURL: URL,
@@ -26,6 +28,7 @@ public struct AppConfiguration: Sendable {
     ) {
         self.mockMode = mockMode
         self.modelBundle = modelBundle
+        self.residencyPolicy = residencyPolicy
         self.historyTurnsInPrompt = historyTurnsInPrompt
         self.assistantName = assistantName
         self.databaseURL = databaseURL
@@ -45,6 +48,7 @@ public struct AppConfiguration: Sendable {
         return AppConfiguration(
             mockMode: mockMode,
             modelBundle: bundle,
+            residencyPolicy: ModelResidencyPolicy.forPhysicalMemoryBytes(ProcessInfo.processInfo.physicalMemory),
             databaseURL: support.appendingPathComponent("insight_app.db"),
             uploadsDirectoryURL: support.appendingPathComponent("uploads", isDirectory: true),
             manualsDirectoryURL: support.appendingPathComponent("manuals", isDirectory: true),
@@ -104,7 +108,7 @@ public enum RuntimeServices: Sendable {
         public let llm: any LlmServing
         public let stt: any SttServing
         public let tts: any TtsServing
-        public let vision: (any VisionServing)?
+        public let vision: (any VisionModelServing)?
         public let recorder: any AudioRecording
         public let usesOnDeviceLLM: Bool
         public let llmBackendDebugDescription: String
@@ -148,7 +152,7 @@ public enum RuntimeServices: Sendable {
 
         RuntimeServicesLog.info("Startup service mode: REAL. LLM=llama.cpp, STT=Whisper, Vision=OCR+SmolVLM(when installed), Recorder=AVAudioRecorder, TTS=system/XTTS.")
 
-        let vision: any VisionServing = CompositeVisionAnalyzer(
+        let vision: any VisionModelServing = CompositeVisionAnalyzer(
             modelPath: store.visionModelURL,
             mmprojPath: store.visionMmprojURL,
             config: configuration.visionConfig

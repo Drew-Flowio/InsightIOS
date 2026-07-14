@@ -23,7 +23,7 @@ public enum LlamaVisionError: Error, LocalizedError {
     }
 }
 
-/// Prototype SmolVLM inference via llama.cpp mtmd + mmproj. Unloads after each call to reduce RAM pressure on Phi-4.
+/// SmolVLM inference via llama.cpp mtmd + mmproj. Load/unload is coordinated by `ModelRuntimeCoordinator`.
 public actor LlamaVisionSession {
     private let modelPath: URL
     private let mmprojPath: URL
@@ -45,13 +45,20 @@ public actor LlamaVisionSession {
             FileManager.default.fileExists(atPath: mmprojPath.path)
     }
 
+    public var isLoaded: Bool {
+        modelHandle != nil && mtmdContext != nil
+    }
+
+    public func prepareForInference() throws {
+        try prepareIfNeeded()
+    }
+
     public func generateObservationsJSON(imageURL: URL) throws -> String {
         guard Self.modelsAvailable(modelPath: modelPath, mmprojPath: mmprojPath) else {
             throw LlamaVisionError.modelsMissing
         }
 
         try prepareIfNeeded()
-        defer { unload() }
 
         guard let modelHandle, let contextHandle, let mtmdContext else {
             throw LlamaVisionError.loadFailed("Vision runtime was not initialized.")

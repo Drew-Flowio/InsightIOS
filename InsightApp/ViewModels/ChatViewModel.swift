@@ -42,6 +42,7 @@ final class ChatViewModel {
     private(set) var photoThumbnailURL: URL?
     private(set) var photoVisualObservations: VisualObservations?
     private(set) var photoVisionSource: VisionAnalysisSource = .ocrOnly
+    private(set) var photoRuntimeNotice: String?
     var showCamera = false
     var showPhotoPicker = false
     var showMindsLibrary = false
@@ -267,6 +268,7 @@ final class ChatViewModel {
                 photoOcrText = context.analysis.ocrText
                 photoVisualObservations = context.analysis.visualObservations
                 photoVisionSource = context.analysis.visionAnalysisSource
+                photoRuntimeNotice = await engine.consumeRuntimeNotice()
                 photoThumbnailURL = URL(fileURLWithPath: context.imagePath)
                 haptic(.success)
             } catch {
@@ -298,6 +300,7 @@ final class ChatViewModel {
             photoOcrText = ""
             photoVisualObservations = nil
             photoVisionSource = .ocrOnly
+            photoRuntimeNotice = nil
             photoThumbnailURL = nil
         }
     }

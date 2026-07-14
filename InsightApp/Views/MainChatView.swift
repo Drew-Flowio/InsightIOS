@@ -35,6 +35,14 @@ struct MainChatView: View {
                         .padding(.horizontal, InsightSpacing.md)
                         .padding(.bottom, InsightSpacing.xxs)
 
+                    if let notice = viewModel.photoRuntimeNotice {
+                        Text(notice)
+                            .font(InsightTypography.caption())
+                            .foregroundStyle(InsightColors.textSecondary)
+                            .padding(.horizontal, InsightSpacing.md)
+                            .padding(.bottom, InsightSpacing.xxs)
+                    }
+
                     if viewModel.photoVisualObservations != nil || viewModel.photoVisionSource == .ocrAndVlm {
                         PhotoObservationsView(
                             observations: viewModel.photoVisualObservations,

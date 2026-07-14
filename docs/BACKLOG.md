@@ -20,6 +20,7 @@ Architecture requirements live in [VISION_LAYER.md](./VISION_LAYER.md).
 | v1.9 | Personality presets, custom prompt editing, active identity display |
 | v2.0 | SmolVLM visual-reasoning prototype merged with OCR before Phi-4 |
 | v2.1 | One-tap Vision Reasoning setup — download, validate, remove, photo source badge |
+| v2.2 | Model runtime coordination — RAM tiers, queued residency, Whisper/VLM/Phi-4 unload order |
 
 ---
 

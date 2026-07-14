@@ -1,10 +1,15 @@
 import Foundation
 import InsightCore
 
-public struct MockVisionAdapter: VisionServing {
+public struct MockVisionAdapter: VisionModelServing {
     public init() {}
 
-    public func analyzePhoto(at imageURL: URL) async throws -> PhotoAnalysisResult {
+    public var supportsVisualReasoning: Bool { get async { true } }
+    public var isLoaded: Bool { get async { false } }
+    public func prepare() async throws {}
+    public func unload() async {}
+
+    public func analyzePhoto(at imageURL: URL, skipVisualReasoning: Bool) async throws -> PhotoAnalysisResult {
         try await Task.sleep(for: .milliseconds(200))
         return PhotoAnalysisResult(
             imagePath: imageURL.path,
@@ -22,8 +27,16 @@ public struct MockVisionAdapter: VisionServing {
                 needsAnotherAngle: true,
                 summary: "Equipment label with a possible heat-related mark near a vent."
             ),
-            visionAnalysisSource: .ocrAndVlm
+            visionAnalysisSource: skipVisualReasoning ? .vlmUnavailable : .ocrAndVlm
         )
+    }
+
+    public func analyzePhoto(at imageURL: URL) async throws -> PhotoAnalysisResult {
+        try await analyzePhoto(at: imageURL, skipVisualReasoning: false)
+    }
+
+    public func analyzePhoto(at imageURL: URL, includeVisualReasoning: Bool) async throws -> PhotoAnalysisResult {
+        try await analyzePhoto(at: imageURL, skipVisualReasoning: !includeVisualReasoning)
     }
 
     public func describeImage(at imageURL: URL) async throws -> String {
@@ -44,7 +57,17 @@ public final class MockLlmAdapter: LlmServing, @unchecked Sendable {
 
     public init() {}
 
-    public func prepare() async throws {}
+    public func prepare() async throws {
+        loaded = true
+    }
+
+    public func unload() async {
+        loaded = false
+    }
+
+    public var isLoaded: Bool { get async { loaded } }
+
+    private var loaded = false
 
     public func generate(
         messages: [ChatMessage],
@@ -76,10 +99,20 @@ public final class MockLlmAdapter: LlmServing, @unchecked Sendable {
 
 struct MockLlmCancellation: Error {}
 
-public struct MockSttAdapter: SttServing {
+public final class MockSttAdapter: SttServing, @unchecked Sendable {
+    private var loaded = false
+
     public init() {}
 
-    public func prepare() async throws {}
+    public func prepare() async throws {
+        loaded = true
+    }
+
+    public func unload() async {
+        loaded = false
+    }
+
+    public var isLoaded: Bool { get async { loaded } }
 
     public func transcribe(audioURL: URL) async throws -> String {
         _ = audioURL

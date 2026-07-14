@@ -16,6 +16,14 @@ public final class LlamaCppLlmAdapter: LlmServing, @unchecked Sendable {
         try await session.prepare()
     }
 
+    public func unload() async {
+        await session.unload()
+    }
+
+    public var isLoaded: Bool {
+        get async { await session.isLoaded }
+    }
+
     public func generate(
         messages: [ChatMessage],
         onToken: (@Sendable (String) -> Void)?,

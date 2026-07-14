@@ -85,6 +85,10 @@ public actor WhisperSession {
     public func unload() {
         contextHandle = nil
     }
+
+    public var isLoaded: Bool {
+        contextHandle != nil
+    }
 }
 
 public struct WhisperSttAdapter: SttServing, Sendable {
@@ -104,5 +108,9 @@ public struct WhisperSttAdapter: SttServing, Sendable {
 
     public func unload() async {
         await session.unload()
+    }
+
+    public var isLoaded: Bool {
+        get async { await session.isLoaded }
     }
 }

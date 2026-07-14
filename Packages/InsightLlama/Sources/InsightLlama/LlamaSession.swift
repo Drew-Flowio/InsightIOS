@@ -179,6 +179,10 @@ public actor LlamaSession {
         }
     }
 
+    public var isLoaded: Bool {
+        modelHandle != nil
+    }
+
     public func unload() {
         LlamaRuntimeLog.info("Unloading llama context, sampler, and model.")
         contextHandle = nil
