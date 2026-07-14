@@ -149,9 +149,9 @@ struct ChatBubbleView: View {
     ScrollView {
         VStack(spacing: 16) {
             ForEach(ChatPreviewData.sampleMessages) { message in
-                ChatBubbleView(message: message, assistantName: "Insight")
+                ChatBubbleView(message: message, assistantName: "Offgrid Minds")
             }
-            ChatBubbleView(message: ChatPreviewData.streamingAssistant, assistantName: "Insight")
+            ChatBubbleView(message: ChatPreviewData.streamingAssistant, assistantName: "Offgrid Minds")
         }
         .padding()
     }

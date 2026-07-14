@@ -54,7 +54,7 @@ struct StatusIndicatorView: View {
             Spacer(minLength: 0)
 
             if showsLocationIndicator {
-                OGMBadge(kind: .location, text: "GPS")
+                OGMBadge(kind: .location, text: "Location")
             }
 
             HStack(spacing: InsightSpacing.xxs) {

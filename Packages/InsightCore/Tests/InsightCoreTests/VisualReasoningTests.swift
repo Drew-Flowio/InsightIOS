@@ -105,9 +105,9 @@ final class PhotoObservationPromptTests: XCTestCase {
     }
 
     func testCustomerAnalysisLabels() {
-        XCTAssertEqual(VisionAnalysisSource.ocrOnly.customerAnalysisLabel, "OCR only")
-        XCTAssertEqual(VisionAnalysisSource.ocrAndVlm.customerAnalysisLabel, "OCR + Visual Reasoning")
-        XCTAssertEqual(VisionAnalysisSource.vlmUnavailable.customerAnalysisLabel, "OCR only")
-        XCTAssertEqual(VisionAnalysisSource.vlmFailed.customerAnalysisLabel, "OCR only")
+        XCTAssertEqual(VisionAnalysisSource.ocrOnly.customerAnalysisLabel, "Text from photo")
+        XCTAssertEqual(VisionAnalysisSource.ocrAndVlm.customerAnalysisLabel, "Photo + visual reasoning")
+        XCTAssertEqual(VisionAnalysisSource.vlmUnavailable.customerAnalysisLabel, "Text from photo")
+        XCTAssertEqual(VisionAnalysisSource.vlmFailed.customerAnalysisLabel, "Text from photo")
     }
 }

@@ -29,7 +29,7 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Offgrid Minds can analyze photos you choose to help with repairs, DIY, and troubleshooting.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Offgrid Minds can use your location to add offline GPS context to questions when you choose to include it.</string>
+	<string>Offgrid Minds can use your location to add offline location context to questions when you choose to include it.</string>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>

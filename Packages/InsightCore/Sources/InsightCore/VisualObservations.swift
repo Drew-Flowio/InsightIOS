@@ -16,9 +16,9 @@ public enum VisionAnalysisSource: String, Sendable, Equatable, Codable {
     public var customerAnalysisLabel: String {
         switch self {
         case .ocrAndVlm:
-            "OCR + Visual Reasoning"
+            "Photo + visual reasoning"
         case .ocrOnly, .vlmUnavailable, .vlmFailed:
-            "OCR only"
+            "Text from photo"
         }
     }
 }

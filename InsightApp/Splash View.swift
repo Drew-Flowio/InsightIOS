@@ -24,8 +24,8 @@ struct SplashView: View {
 
                     Image("OGMLogoMoonlight")
                         .resizable()
-                        .aspectRatio(1, contentMode: .fill)
-                        .ignoresSafeArea()
+                        .aspectRatio(1, contentMode: .fit)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .opacity(backdropOpacity)
 
                     VStack(spacing: InsightSpacing.lg) {

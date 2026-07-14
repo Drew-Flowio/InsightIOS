@@ -201,10 +201,10 @@ struct ComposerBarView: View {
     private var stopBarLabel: String {
         switch appState {
         case .listening: "Listening…"
-        case .transcribing: "Transcribing…"
+        case .transcribing: "Processing voice…"
         case .improvingPrompt: "Improving question…"
         case .thinking: "Thinking…"
-        case .streaming: "Streaming reply…"
+        case .streaming: "Replying…"
         case .speaking: "Speaking…"
         default: "\(assistantName) is working…"
         }
@@ -250,7 +250,7 @@ private struct ComposerBackground: View {
                 Spacer()
                 ComposerBarView(
                     text: $text,
-                    placeholder: "Ask Insight anything…",
+                    placeholder: "Ask Offgrid Minds anything…",
                     appState: .idle,
                     isBusy: false,
                     isRecording: false,

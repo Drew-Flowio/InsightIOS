@@ -71,7 +71,7 @@ struct ChatTranscriptView: View {
 #Preview {
     ChatTranscriptView(
         messages: ChatPreviewData.sampleMessages,
-        assistantName: "Insight",
+        assistantName: "Offgrid Minds",
         appState: .idle,
         streamingMessageID: nil
     )

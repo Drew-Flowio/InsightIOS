@@ -64,11 +64,11 @@ struct PhotoObservationsView: View {
                 .font(InsightTypography.caption())
                 .foregroundStyle(InsightColors.textSecondary)
         case .vlmFailed:
-            Text("Visual reasoning failed for this photo — showing OCR only.")
+            Text("Visual reasoning failed for this photo — showing text from photo only.")
                 .font(InsightTypography.caption())
                 .foregroundStyle(InsightColors.textSecondary)
         case .vlmUnavailable:
-            Text("Enable Visual Reasoning in Setup to go beyond OCR.")
+            Text("Enable Visual Reasoning in Setup for richer photo analysis.")
                 .font(InsightTypography.caption())
                 .foregroundStyle(InsightColors.textSecondary)
         case .ocrOnly:

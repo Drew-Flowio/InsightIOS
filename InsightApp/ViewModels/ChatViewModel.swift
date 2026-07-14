@@ -332,6 +332,9 @@ final class ChatViewModel {
                 try InsightModelSetup.removeVoiceModel(for: configuration)
                 voiceSetupState = .notInstalled
                 ProductSetupStore.skippedVoice = true
+                if isEngineReady {
+                    await reinitializeEngine(with: configuration)
+                }
             } catch {
                 voiceSetupState = .failed("Could not remove voice support.")
             }
@@ -346,13 +349,15 @@ final class ChatViewModel {
             do {
                 _ = try await InsightModelSetup.downloadLLM(for: configuration) { [weak self] progress in
                     Task { @MainActor in
-                        self?.bootstrapState = .downloading(progress.fractionCompleted.map { $0 * 0.85 })
+                        self?.bootstrapState = .downloading(progress.fractionCompleted.map { $0 * (ProductSetupStore.skippedVoice ? 1.0 : 0.85) })
                     }
                 }
-                _ = try await InsightModelSetup.downloadWhisper(for: configuration) { [weak self] progress in
-                    Task { @MainActor in
-                        if let fraction = progress.fractionCompleted {
-                            self?.bootstrapState = .downloading(0.85 + fraction * 0.15)
+                if !ProductSetupStore.skippedVoice {
+                    _ = try await InsightModelSetup.downloadWhisper(for: configuration) { [weak self] progress in
+                        Task { @MainActor in
+                            if let fraction = progress.fractionCompleted {
+                                self?.bootstrapState = .downloading(0.85 + fraction * 0.15)
+                            }
                         }
                     }
                 }
@@ -684,7 +689,7 @@ final class ChatViewModel {
         }
 
         guard isVoiceReady else {
-            errorMessage = "Voice support is not installed. Open Setup → Storage to download Whisper."
+            errorMessage = "Voice is not installed. Open Setup → Storage to download voice support."
             return
         }
 
@@ -695,7 +700,7 @@ final class ChatViewModel {
     func beginHoldToTalk() {
         guard let engine, !isRecording, !isBusy else { return }
         guard isVoiceReady else {
-            errorMessage = "Voice support is not installed. Open Setup → Storage to download Whisper."
+            errorMessage = "Voice is not installed. Open Setup → Storage to download voice support."
             return
         }
         voiceCaptureUsesHold = true
@@ -1033,6 +1038,9 @@ final class ChatViewModel {
                 }
                 visionSetupState = .ready
                 ProductSetupStore.skippedVision = false
+                if isEngineReady, let configuration {
+                    await reinitializeEngine(with: configuration)
+                }
             } catch {
                 visionSetupState = .failed(error.localizedDescription)
                 visionSetupErrorMessage = error.localizedDescription

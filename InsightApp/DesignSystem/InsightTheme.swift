@@ -43,11 +43,11 @@ enum InsightTheme {
         switch state {
         case .idle: "Ready"
         case .listening: "Listening"
-        case .transcribing: "Transcribing"
-        case .analyzing: "Analyzing"
+        case .transcribing: "Processing voice"
+        case .analyzing: "Analyzing photo"
         case .thinking: "Thinking"
         case .improvingPrompt: "Improving"
-        case .streaming: "Streaming"
+        case .streaming: "Replying"
         case .speaking: "Speaking"
         case .error: "Error"
         }

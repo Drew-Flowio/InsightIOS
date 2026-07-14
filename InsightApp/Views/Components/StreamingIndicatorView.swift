@@ -31,37 +31,33 @@ struct ThinkingShimmer: View {
     @State private var animate = false
 
     var body: some View {
-        HStack(spacing: InsightSpacing.sm) {
-            OGMBrandMark(style: .thinking, size: 28)
-
-            RoundedRectangle(cornerRadius: InsightSpacing.bubbleRadius)
-                .fill(InsightColors.surfaceElevated)
-                .frame(height: 52)
-                .frame(maxWidth: .infinity)
-                .overlay {
-                    RoundedRectangle(cornerRadius: InsightSpacing.bubbleRadius)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    .clear,
-                                    InsightColors.accentSoft,
-                                    .clear,
-                                ],
-                                startPoint: animate ? .leading : .trailing,
-                                endPoint: animate ? .trailing : .leading
-                            )
+        RoundedRectangle(cornerRadius: InsightSpacing.bubbleRadius)
+            .fill(InsightColors.surfaceElevated)
+            .frame(height: 52)
+            .frame(maxWidth: .infinity)
+            .overlay {
+                RoundedRectangle(cornerRadius: InsightSpacing.bubbleRadius)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                .clear,
+                                InsightColors.accentSoft,
+                                .clear,
+                            ],
+                            startPoint: animate ? .leading : .trailing,
+                            endPoint: animate ? .trailing : .leading
                         )
-                }
-                .overlay {
-                    RoundedRectangle(cornerRadius: InsightSpacing.bubbleRadius)
-                        .strokeBorder(InsightColors.border, lineWidth: 1)
-                }
-        }
-        .onAppear {
-            withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
-                animate = true
+                    )
             }
-        }
+            .overlay {
+                RoundedRectangle(cornerRadius: InsightSpacing.bubbleRadius)
+                    .strokeBorder(InsightColors.border, lineWidth: 1)
+            }
+            .onAppear {
+                withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
+                    animate = true
+                }
+            }
     }
 }
 
