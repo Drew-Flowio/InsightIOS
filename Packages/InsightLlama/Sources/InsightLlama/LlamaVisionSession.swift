@@ -64,7 +64,7 @@ public actor LlamaVisionSession {
             throw LlamaVisionError.loadFailed("Vision runtime was not initialized.")
         }
 
-        var wrapper = mtmd_helper_bitmap_init_from_file(mtmdContext, imageURL.path, false)
+        let wrapper = mtmd_helper_bitmap_init_from_file(mtmdContext, imageURL.path, false)
         defer {
             if let bitmap = wrapper.bitmap {
                 mtmd_bitmap_free(bitmap)

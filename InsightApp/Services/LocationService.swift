@@ -109,7 +109,7 @@ final class LocationService: NSObject {
         )
     }
 
-    private func withTimeout<T>(
+    private func withTimeout<T: Sendable>(
         seconds: TimeInterval,
         operation: @escaping @Sendable () async throws -> T
     ) async throws -> T {

@@ -931,6 +931,10 @@ final class ChatViewModel {
         importLibraryFile(from: url)
     }
 
+    func showMindsImportOpenError() {
+        mindsFeedbackMessage = "Could not open the selected file."
+    }
+
     func clearMindsFeedback() {
         mindsFeedbackMessage = nil
     }
@@ -1038,7 +1042,7 @@ final class ChatViewModel {
                 }
                 visionSetupState = .ready
                 ProductSetupStore.skippedVision = false
-                if isEngineReady, let configuration {
+                if isEngineReady {
                     await reinitializeEngine(with: configuration)
                 }
             } catch {

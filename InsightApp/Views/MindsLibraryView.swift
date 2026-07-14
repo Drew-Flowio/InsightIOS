@@ -62,7 +62,7 @@ struct MindsLibraryView: View {
                     guard let url = urls.first else { return }
                     viewModel.importLibraryFile(from: url)
                 case .failure:
-                    viewModel.mindsFeedbackMessage = "Could not open the selected file."
+                    viewModel.showMindsImportOpenError()
                 }
             }
             .sheet(item: $viewModel.userDataImportDraft) { draft in
