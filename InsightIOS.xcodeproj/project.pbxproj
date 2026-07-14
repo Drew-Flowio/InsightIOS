@@ -47,6 +47,12 @@
 		A10000000000000000000025 /* DemoGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000025 /* DemoGuideView.swift */; };
 		A10000000000000000000026 /* StorageSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000026 /* StorageSettingsView.swift */; };
 		A10000000000000000000027 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000027 /* AppRootView.swift */; };
+		A10000000000000000000028 /* VisualWorkspaceContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000028 /* VisualWorkspaceContext.swift */; };
+		A10000000000000000000029 /* VisualWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000029 /* VisualWorkspaceView.swift */; };
+		A1000000000000000000002A /* ZoomableImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002A /* ZoomableImageView.swift */; };
+		A1000000000000000000002B /* PDFPageViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002B /* PDFPageViewer.swift */; };
+		A1000000000000000000002C /* WorkspaceMapContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002C /* WorkspaceMapContent.swift */; };
+		A1000000000000000000002D /* WorkspaceAnswerPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000002D /* WorkspaceAnswerPanel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -90,6 +96,12 @@
 		A20000000000000000000025 /* DemoGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoGuideView.swift; sourceTree = "<group>"; };
 		A20000000000000000000026 /* StorageSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageSettingsView.swift; sourceTree = "<group>"; };
 		A20000000000000000000027 /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
+		A20000000000000000000028 /* VisualWorkspaceContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualWorkspaceContext.swift; sourceTree = "<group>"; };
+		A20000000000000000000029 /* VisualWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualWorkspaceView.swift; sourceTree = "<group>"; };
+		A2000000000000000000002A /* ZoomableImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoomableImageView.swift; sourceTree = "<group>"; };
+		A2000000000000000000002B /* PDFPageViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFPageViewer.swift; sourceTree = "<group>"; };
+		A2000000000000000000002C /* WorkspaceMapContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceMapContent.swift; sourceTree = "<group>"; };
+		A2000000000000000000002D /* WorkspaceAnswerPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceAnswerPanel.swift; sourceTree = "<group>"; };
 		A30000000000000000000001 /* InsightIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InsightIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -162,6 +174,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000004 /* ChatDisplayMessage.swift */,
+				A20000000000000000000028 /* VisualWorkspaceContext.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -206,8 +219,21 @@
 				A20000000000000000000026 /* StorageSettingsView.swift */,
 				A20000000000000000000027 /* AppRootView.swift */,
 				A6000000000000000000000A /* Components */,
+				A6000000000000000000000C /* VisualWorkspace */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		A6000000000000000000000C /* VisualWorkspace */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000029 /* VisualWorkspaceView.swift */,
+				A2000000000000000000002A /* ZoomableImageView.swift */,
+				A2000000000000000000002B /* PDFPageViewer.swift */,
+				A2000000000000000000002C /* WorkspaceMapContent.swift */,
+				A2000000000000000000002D /* WorkspaceAnswerPanel.swift */,
+			);
+			path = VisualWorkspace;
 			sourceTree = "<group>";
 		};
 		A6000000000000000000000A /* Components */ = {
@@ -345,6 +371,12 @@
 				A10000000000000000000025 /* DemoGuideView.swift in Sources */,
 				A10000000000000000000026 /* StorageSettingsView.swift in Sources */,
 				A10000000000000000000027 /* AppRootView.swift in Sources */,
+				A10000000000000000000028 /* VisualWorkspaceContext.swift in Sources */,
+				A10000000000000000000029 /* VisualWorkspaceView.swift in Sources */,
+				A1000000000000000000002A /* ZoomableImageView.swift in Sources */,
+				A1000000000000000000002B /* PDFPageViewer.swift in Sources */,
+				A1000000000000000000002C /* WorkspaceMapContent.swift in Sources */,
+				A1000000000000000000002D /* WorkspaceAnswerPanel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

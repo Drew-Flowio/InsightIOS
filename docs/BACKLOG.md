@@ -25,6 +25,7 @@ Architecture requirements live in [VISION_LAYER.md](./VISION_LAYER.md).
 | v2.4 | Offline map + geographic Mind records — MapKit screen, nearby sources, prompt enrichment |
 | v2.5 | User data import — CSV/JSON/text/Markdown into private local Minds with map-ready coordinates |
 | v2.6 | Product setup and demo readiness — first-run wizard, storage view, Offgrid Minds branding |
+| v2.7 | Visual workspace — full-screen photos, maps, PDF pages with collapsible answer panel and in-place composer |
 
 ---
 

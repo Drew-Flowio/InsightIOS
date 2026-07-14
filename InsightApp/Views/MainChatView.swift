@@ -26,7 +26,7 @@ struct MainChatView: View {
                     onOpenMinds: { viewModel.showMindsLibrary = true },
                     onOpenMemory: { viewModel.showMemoryScreen = true },
                     onOpenSetup: { viewModel.showVisionSetupScreen = true },
-                    onOpenMap: { viewModel.showGeoMapScreen = true },
+                    onOpenMap: { viewModel.openMapWorkspace() },
                     showsLocationIndicator: viewModel.showsLocationIndicator
                 )
 
@@ -34,7 +34,11 @@ struct MainChatView: View {
                     messages: viewModel.messages,
                     assistantName: viewModel.assistantName,
                     appState: viewModel.appState,
-                    streamingMessageID: viewModel.streamingMessageID
+                    streamingMessageID: viewModel.streamingMessageID,
+                    onPhotoTap: { viewModel.openPhotoWorkspace(for: $0) },
+                    onSourceTap: { source, message in
+                        viewModel.openSourceWorkspace(source: source, from: message)
+                    }
                 )
 
                 if viewModel.hasPhotoAttachment {
@@ -159,6 +163,10 @@ struct MainChatView: View {
         }
         .sheet(isPresented: $viewModel.showVisionSetupScreen) {
             VisionSetupView(viewModel: viewModel)
+        }
+        .fullScreenCover(item: $viewModel.visualWorkspaceContext) { context in
+            VisualWorkspaceView(viewModel: viewModel, context: context)
+                .id(context.id)
         }
         .sheet(isPresented: $viewModel.showGeoMapScreen) {
             GeoMapView(viewModel: viewModel)

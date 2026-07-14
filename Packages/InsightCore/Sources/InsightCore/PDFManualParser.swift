@@ -74,4 +74,9 @@ public enum PDFManualParser {
         if slug.isEmpty { return "manual" }
         return String(slug.prefix(40))
     }
+
+    public static func pageCount(at pdfURL: URL) -> Int? {
+        guard let document = PDFDocument(url: pdfURL), document.pageCount > 0 else { return nil }
+        return document.pageCount
+    }
 }

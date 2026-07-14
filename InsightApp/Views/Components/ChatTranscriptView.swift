@@ -1,12 +1,13 @@
 import SwiftUI
 import InsightCore
-import InsightCore
 
 struct ChatTranscriptView: View {
     let messages: [ChatDisplayMessage]
     let assistantName: String
     let appState: AppState
     let streamingMessageID: String?
+    var onPhotoTap: ((ChatDisplayMessage) -> Void)?
+    var onSourceTap: ((KnowledgeSourceDisplay, ChatDisplayMessage) -> Void)?
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -21,7 +22,12 @@ struct ChatTranscriptView: View {
                     }
 
                     ForEach(messages) { message in
-                        ChatBubbleView(message: message, assistantName: assistantName)
+                        ChatBubbleView(
+                            message: message,
+                            assistantName: assistantName,
+                            onPhotoTap: onPhotoTap,
+                            onSourceTap: onSourceTap
+                        )
                             .id(message.id)
                     }
 

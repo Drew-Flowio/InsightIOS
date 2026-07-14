@@ -3,6 +3,8 @@ import SwiftUI
 struct ChatBubbleView: View {
     let message: ChatDisplayMessage
     let assistantName: String
+    var onPhotoTap: ((ChatDisplayMessage) -> Void)?
+    var onSourceTap: ((KnowledgeSourceDisplay, ChatDisplayMessage) -> Void)?
     @State private var showsSources = false
 
     var body: some View {
@@ -33,23 +35,29 @@ struct ChatBubbleView: View {
     private var bubbleContent: some View {
         VStack(alignment: .leading, spacing: InsightSpacing.xs) {
             if message.role == .photo, let imageURL = message.imageURL {
-                AsyncImage(url: imageURL) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .failure:
-                        photoPlaceholder
-                    case .empty:
-                        photoPlaceholder
-                            .overlay { ProgressView().tint(InsightColors.accent) }
-                    @unknown default:
-                        photoPlaceholder
+                Button {
+                    onPhotoTap?(message)
+                } label: {
+                    AsyncImage(url: imageURL) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        case .failure:
+                            photoPlaceholder
+                        case .empty:
+                            photoPlaceholder
+                                .overlay { ProgressView().tint(InsightColors.accent) }
+                        @unknown default:
+                            photoPlaceholder
+                        }
                     }
+                    .frame(maxWidth: 220, maxHeight: 160)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
-                .frame(maxWidth: 220, maxHeight: 160)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .buttonStyle(.plain)
+                .accessibilityLabel("Open photo in workspace")
             }
 
             if message.role == .photo {
@@ -72,7 +80,13 @@ struct ChatBubbleView: View {
             }
 
             if message.isAssistant, !message.knowledgeSources.isEmpty {
-                KnowledgeSourcesSection(sources: message.knowledgeSources, isExpanded: $showsSources)
+                KnowledgeSourcesSection(
+                    sources: message.knowledgeSources,
+                    isExpanded: $showsSources,
+                    onSourceTap: { source in
+                        onSourceTap?(source, message)
+                    }
+                )
             }
 
             if let locationLabel = message.locationLabel, !locationLabel.isEmpty {

@@ -68,6 +68,7 @@ final class ChatViewModel {
     var showPersonalityScreen = false
     var showVisionSetupScreen = false
     var showGeoMapScreen = false
+    var visualWorkspaceContext: VisualWorkspaceContext?
     var showStorageScreen = false
     var showDemoGuide = false
     var userDataImportDraft: UserDataImportDraft?
@@ -450,6 +451,116 @@ final class ChatViewModel {
 
     func captureMapLocationSnapshot() async -> LocationSnapshot {
         await locationService.captureSnapshot()
+    }
+
+    // MARK: - Visual Workspace
+
+    struct WorkspacePanelContent {
+        let answerText: String
+        let isStreaming: Bool
+        let photoObservations: String?
+        let photoOcrText: String?
+        let sources: [KnowledgeSourceDisplay]
+    }
+
+    func openPhotoWorkspace(for message: ChatDisplayMessage) {
+        guard message.role == .photo, let imageURL = message.imageURL else { return }
+        visualWorkspaceContext = VisualWorkspaceContext(
+            visual: .photo(imageURL),
+            anchorMessageID: message.id,
+            photoObservations: message.photoObservationsText
+        )
+        haptic(.light)
+    }
+
+    func openMapWorkspace() {
+        visualWorkspaceContext = VisualWorkspaceContext(
+            visual: .map,
+            anchorMessageID: messages.last(where: { $0.isAssistant })?.id
+        )
+        showGeoMapScreen = false
+        haptic(.light)
+    }
+
+    func openSourceWorkspace(source: KnowledgeSourceDisplay, from message: ChatDisplayMessage) {
+        guard source.isManualSource else { return }
+        let page = source.manualPageNumber ?? 1
+        Task {
+            guard let engine else { return }
+            let pageCount = await engine.manualPDFPageCount(forVolumeID: source.volumeID) ?? page
+            visualWorkspaceContext = VisualWorkspaceContext(
+                visual: .manualPage(
+                    volumeID: source.volumeID,
+                    volumeTitle: source.volumeTitle,
+                    pageNumber: min(page, pageCount),
+                    pageCount: pageCount
+                ),
+                anchorMessageID: message.id
+            )
+            haptic(.light)
+        }
+    }
+
+    func openSourceInWorkspace(source: KnowledgeSourceDisplay, anchorMessageID: String?) {
+        guard source.isManualSource else { return }
+        let page = source.manualPageNumber ?? 1
+        Task {
+            guard let engine else { return }
+            let pageCount = await engine.manualPDFPageCount(forVolumeID: source.volumeID) ?? page
+            visualWorkspaceContext = VisualWorkspaceContext(
+                visual: .manualPage(
+                    volumeID: source.volumeID,
+                    volumeTitle: source.volumeTitle,
+                    pageNumber: min(page, pageCount),
+                    pageCount: pageCount
+                ),
+                anchorMessageID: anchorMessageID
+            )
+            haptic(.light)
+        }
+    }
+
+    func closeVisualWorkspace() {
+        visualWorkspaceContext = nil
+    }
+
+    func workspacePanelContent(for context: VisualWorkspaceContext) -> WorkspacePanelContent {
+        let assistant = relatedAssistantMessage(for: context)
+        let photo = relatedPhotoMessage(for: context)
+        let isStreaming = assistant?.id == streamingMessageID && (assistant?.isStreaming ?? false)
+        return WorkspacePanelContent(
+            answerText: assistant?.content ?? "",
+            isStreaming: isStreaming,
+            photoObservations: photo?.photoObservationsText ?? context.photoObservations,
+            photoOcrText: photo?.photoOcrText,
+            sources: assistant?.knowledgeSources ?? []
+        )
+    }
+
+    func manualPDFURL(forVolumeID volumeID: String) async -> URL? {
+        guard let engine else { return nil }
+        return await engine.manualPDFURL(forVolumeID: volumeID)
+    }
+
+    func manualPDFPageCount(forVolumeID volumeID: String) async -> Int? {
+        guard let engine else { return nil }
+        return await engine.manualPDFPageCount(forVolumeID: volumeID)
+    }
+
+    private func relatedAssistantMessage(for context: VisualWorkspaceContext) -> ChatDisplayMessage? {
+        guard let anchorID = context.anchorMessageID,
+              let index = messages.firstIndex(where: { $0.id == anchorID }) else { return nil }
+        let anchor = messages[index]
+        if anchor.isAssistant { return anchor }
+        return messages.dropFirst(index + 1).first(where: { $0.isAssistant })
+    }
+
+    private func relatedPhotoMessage(for context: VisualWorkspaceContext) -> ChatDisplayMessage? {
+        guard let anchorID = context.anchorMessageID,
+              let index = messages.firstIndex(where: { $0.id == anchorID }) else { return nil }
+        let anchor = messages[index]
+        if anchor.role == .photo { return anchor }
+        return messages.prefix(index).reversed().first(where: { $0.role == .photo })
     }
 
     private func attachLocationForTurn(engine: InsightEngine) async {
@@ -1074,7 +1185,9 @@ final class ChatViewModel {
                     content: record.content,
                     timestamp: parseTimestamp(record.timestamp),
                     imageURL: URL(fileURLWithPath: imagePath),
-                    locationLabel: locationLabel
+                    locationLabel: locationLabel,
+                    photoObservationsText: photoObservationsSummary(from: record.visualObservationsJSON),
+                    photoOcrText: record.ocrText
                 )
             }
             if record.content.hasPrefix("📷 Photo attached") {
@@ -1098,6 +1211,8 @@ final class ChatViewModel {
             let sources = (sourcesByMessage[record.id] ?? []).map {
                 KnowledgeSourceDisplay(
                     id: $0.id,
+                    volumeID: $0.volumeID,
+                    recordID: $0.recordID,
                     volumeTitle: $0.volumeTitle,
                     recordTitle: $0.recordTitle,
                     excerpt: $0.excerpt
@@ -1128,6 +1243,26 @@ final class ChatViewModel {
         let quality = snapshot.resolvedQuality()
         guard quality != .denied, quality != .unavailable else { return nil }
         return LocationContext(snapshot: snapshot).responseFootnote
+    }
+
+    private func photoObservationsSummary(from json: String?) -> String? {
+        guard let json, let observations = VisualObservationsParser().parse(json), !observations.isEmpty else {
+            return nil
+        }
+        var parts: [String] = []
+        if !observations.summary.isEmpty {
+            parts.append(observations.summary)
+        }
+        if !observations.visibleObjects.isEmpty {
+            parts.append("Visible: \(observations.visibleObjects.joined(separator: ", "))")
+        }
+        if !observations.readableLabels.isEmpty {
+            parts.append("Labels: \(observations.readableLabels.joined(separator: ", "))")
+        }
+        if !observations.possibleProblems.isEmpty {
+            parts.append("Possible issues: \(observations.possibleProblems.joined(separator: ", "))")
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: "\n")
     }
 
     private func parseTimestamp(_ value: String) -> Date {

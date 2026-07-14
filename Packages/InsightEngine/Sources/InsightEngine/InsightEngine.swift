@@ -2,6 +2,7 @@ import Foundation
 import InsightCore
 import InsightRuntime
 import InsightStorage
+import PDFKit
 
 /// The one object the UI layer is allowed to talk to.
 public actor InsightEngine {
@@ -433,6 +434,16 @@ public actor InsightEngine {
             grouped[row.messageID, default: []].append(source)
         }
         return grouped
+    }
+
+    public func manualPDFURL(forVolumeID volumeID: String) -> URL? {
+        let url = configuration.manualsDirectoryURL.appendingPathComponent("\(volumeID).pdf")
+        return FileManager.default.fileExists(atPath: url.path) ? url : nil
+    }
+
+    public func manualPDFPageCount(forVolumeID volumeID: String) -> Int? {
+        guard let url = manualPDFURL(forVolumeID: volumeID) else { return nil }
+        return PDFManualParser.pageCount(at: url)
     }
 
     public func listInstalledMinds() -> [KnowledgeVolumeRecord] {
